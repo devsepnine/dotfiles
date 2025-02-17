@@ -1,0 +1,10 @@
+{
+  "name": "@c0zycr473/dotfiles-monorepo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devsepnine/dotfiles.git"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
