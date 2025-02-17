@@ -1,0 +1,21 @@
+{
+  "name": "@c0zycr473/prettier-config",
+  "version": "1.0.5",
+  "description": "Basic Prettier Config",
+  "type": "module",
+  "exports": {
+    "import" : "./index.mjs",
+    "require" : "./index.cjs"
+  },
+  "files": [
+    "index.mjs",
+    "index.cjs"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "prettier": ">=3.0.0"
+  }
+}
