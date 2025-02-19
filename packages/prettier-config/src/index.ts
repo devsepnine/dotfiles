@@ -7,11 +7,11 @@ const config: Options = {
   semi: true,
   singleQuote: true,
   jsxSingleQuote: false,
-  trailingComma: "es5",
+  trailingComma: "all", // “To reduce git diff.”
   bracketSpacing: true,
-  bracketSameLine: false,
-  arrowParens: "always",
-  endOfLine: "lf",
+  bracketSameLine: false, // “Change to false for improved readability.”
+  arrowParens: "always", // “Enhance consistency.”
+  endOfLine: "lf", // “Prevent different line endings across operating systems.”
 };
 
 export default config;
