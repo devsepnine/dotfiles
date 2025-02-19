@@ -15,30 +15,26 @@ pnpm add -D @c0zycr473/prettier-config
 
 ### Usage
 
-`.prettierrc.mjs` or `.prettierrc.js` or `prettier.config.js`
+`prettier.config.mjs` or `prettier.config.js`
 
 ```js
-import basicConfig from '@c0zycr473/prettier-config';
+import preset from '@c0zycr473/prettier-config';
 
 const config = {
-  ...basicConfig,
+  ...preset,
   // your custom config
 }
 ```
 
-### Default Options
-```js
-{
-  printWidth: 100,
-  tabWidth: 2,
-  useTabs: false,
-  semi: true,
-  singleQuote: true,
-  trailingComma: "es5",
-  bracketSpacing: true,
-  arrowParens: "avoid",
-  endOfLine: "lf",
-  jsxSingleQuote: true
+`prettier.config.mts` or `prettier.config.ts`
+```ts
+import preset from '@c0zycr473/prettier-config';
+
+import type { Options } from 'prettier';
+
+const config: Options = {
+  ...preset,
+  // your custom config
 }
 ```
 
