@@ -1,0 +1,56 @@
+[column]
+    ui = auto  # Automatically apply column UI
+
+[branch]
+    sort = -committerdate  # Sort branch list by most recent commit
+
+[tag]
+    sort = version:refname  # Sort tags based on version order
+
+[init]
+    defaultBranch = main  # Set the default branch to 'main'
+
+[diff]
+    algorithm = histogram   # Use a more refined diff comparison algorithm
+    colorMoved = plain      # Disable color highlighting for moved lines
+    mnemonicPrefix = true   # Use intuitive symbols in diff output
+    renames = true          # Enable rename detection for files
+
+[push]
+    default = simple         # Push the current branch to a remote branch with the same name
+    autoSetupRemote = true   # Automatically set up remote tracking for new branches
+    followTags = true        # Push tags along with commits
+
+[fetch]
+    prune = true      # Remove deleted remote branches from local
+    pruneTags = true  # Remove deleted remote tags from local
+    all = true        # Fetch from all remote repositories
+
+[help]
+    autocorrect = prompt  # Detect typos in commands and suggest corrections
+
+[commit]
+    verbose = true  # Show changed content when writing a commit message
+
+[rerere]
+    enabled = true    # Automatically reuse previously resolved merge conflicts
+    autoupdate = true # Auto-update resolved conflicts when using rerere
+
+[core]
+    excludesfile = ~/.gitignore  # Use a global .gitignore file
+
+[rebase]
+    autoSquash = true  # Automatically squash 'fixup!' and 'squash!' commits during rebase
+    autoStash = true   # Stash local changes before rebase and restore them afterward
+    updateRefs = true  # Automatically update references when rebasing
+
+# Uncomment and use the settings below according to personal preference
+[core]
+    fsmonitor = true       # Improve file change detection speed
+    untrackedCache = true  # Cache untracked files for performance improvement
+
+[merge]
+    conflictstyle = zdiff3  # Enhanced merge conflict display (Use 'diff3' for Git versions below 2.3)
+
+[pull]
+    rebase = true  # Perform rebase instead of merge when using `git pull`
