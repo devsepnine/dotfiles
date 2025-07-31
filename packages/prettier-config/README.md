@@ -4,13 +4,13 @@
 
 
 ```bash
-npm install -D @c0zycr473/prettier-config
+npm install -D @hibicanvas/prettier-config
 ```
 ```bash
-yarn add -D @c0zycr473/prettier-config
+yarn add -D @hibicanvas/prettier-config
 ```
 ```bash
-pnpm add -D @c0zycr473/prettier-config
+pnpm add -D @hibicanvas/prettier-config
 ```
 
 ### Usage
@@ -18,7 +18,7 @@ pnpm add -D @c0zycr473/prettier-config
 `prettier.config.mjs` or `prettier.config.js`
 
 ```js
-import preset from '@c0zycr473/prettier-config';
+import preset from '@hibicanvas/prettier-config';
 
 const config = {
   ...preset,
@@ -28,7 +28,7 @@ const config = {
 
 `prettier.config.mts` or `prettier.config.ts`
 ```ts
-import preset from '@c0zycr473/prettier-config';
+import preset from '@hibicanvas/prettier-config';
 
 import type { Options } from 'prettier';
 
