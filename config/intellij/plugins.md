@@ -1,12 +1,16 @@
 ### Required plugins
-- CodeGlance
+- CodeGlance Pro
 - GitToolBox
 - Indent Rainbow
 - Rainbow Brackets
-- Sona Qube For IDE
+- SonaQube For IDE
 - Prettier (FE)
 - catppucin Theme
 - catppucin Icon
+- code metrics
+- color highlighter
+- inspection lens
+- mermaid
 
 ### Recommended plugins
 - JWT Analyzer
@@ -15,3 +19,8 @@
 - CamelCase
 - px2rem (FE)
 - Grep Console
+- go
+- go Templates
+- rust
+- python
+- tauri
