@@ -1,3 +1,17 @@
+## intellij Edit Custom VM Options
+
+### Recommended VM Options
+
+| RAM  | Xmx     | Xms    | ReservedCodeCacheSize |
+|------|---------|--------|-----------------------|
+| 8GB  | 2048MB  | 1024MB | 512MB                 |
+| 16GB | 4096MB  | 2048MB | 1024MB                |
+| 32GB | 8192MB  | 4096MB | 2048MB                |
+| 64GB | 16384MB | 8192MB | 4096MB                |
+
+
+
+
 ```
 # 일반
 -server
@@ -16,7 +30,7 @@
 # JVM은 자주 사용되는 메서드를 여러 번 컴파일하여 성능 향상, 실행 속도 향상
 -XX:+TieredCompilation
 # 예약된 코드 캐시 크기
--XX:ReservedCodeCacheSize=512m
+-XX:ReservedCodeCacheSize=2048m
 # SoftReference Least Recently Used(LRU) 정책을 조정
 -XX:SoftRefLRUPolicyMSPerMB=50
 # 메모리가 부족할 때 코드 캐시를 지워 특정 시나리오에서 성능을 향상
