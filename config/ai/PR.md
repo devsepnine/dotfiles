@@ -109,8 +109,11 @@ gh pr create --base upstream/develop --title "[PP-XXXX] Work description" --body
 # If no upstream: Create PR with origin/develop as target
 gh pr create --base origin/develop --title "[PP-XXXX] Work description" --body-file .github/PULL_REQUEST_TEMPLATE.md
 
-# Auto-select appropriate target (simple version)
-gh pr create
+# Auto-select appropriate target (simple version) - defaults to develop branch
+gh pr create --base develop
+
+# Create PR with user-specified branch (e.g., hotfix, release branches)
+gh pr create --base feature/hotfix-branch --title "[PP-XXXX] Work description"
 ```
 
 **Branch Strategy:**
@@ -134,10 +137,12 @@ gh pr create --base origin/develop
 
 ### Default Settings
 
-**Target Branch:**
-- Priority: `upstream/develop` > `origin/develop`
+**Target Branch Settings:**
+- **Default Targets**: `upstream/develop` or `origin/develop`
+- **Priority**: `upstream/develop` > `origin/develop`
 - If upstream is configured: Use upstream/develop as target
 - If no upstream: Use origin/develop as target
+- **User-specified branches**: User-specified branches are allowed (e.g., `--base feature/hotfix`)
 
 **Required Checks:**
 

@@ -109,8 +109,11 @@ gh pr create --base upstream/develop --title "[PP-XXXX] 작업 내용" --body-fi
 # upstream이 없는 경우: origin/develop을 타겟으로 PR 생성
 gh pr create --base origin/develop --title "[PP-XXXX] 작업 내용" --body-file .github/PULL_REQUEST_TEMPLATE.md
 
-# 자동으로 적절한 타겟 선택 (간단 버전)
-gh pr create
+# 자동으로 적절한 타겟 선택 (간단 버전) - 기본적으로 develop 브랜치 타겟
+gh pr create --base develop
+
+# 사용자 지정 브랜치로 PR 생성 (예: hotfix, release 브랜치 등)
+gh pr create --base feature/hotfix-branch --title "[PP-XXXX] 작업 내용"
 ```
 
 **브랜치 전략:**
@@ -134,10 +137,12 @@ gh pr create --base origin/develop
 
 ### 기본 설정
 
-**타겟 브랜치:**
-- 우선순위: `upstream/develop` > `origin/develop`
+**타겟 브랜치 설정:**
+- **기본 타겟**: `upstream/develop` 또는 `origin/develop` 
+- **우선순위**: `upstream/develop` > `origin/develop`  
 - upstream이 설정된 경우: upstream/develop을 타겟으로 사용
 - upstream이 없는 경우: origin/develop을 타겟으로 사용
+- **사용자 지정 브랜치**: 사용자가 명시적으로 지정한 브랜치는 허용 (예: `--base feature/hotfix`)
 
 **필수 확인사항:**
 
