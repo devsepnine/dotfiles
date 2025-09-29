@@ -99,51 +99,7 @@
 - [ ] Breaking Change 시 CHANGELOG 업데이트
 ```
 
-### PR 생성 명령어
-
-**GitHub CLI 사용 (권장):**
-```bash
-# upstream이 있는 경우: upstream/develop을 기본 타겟으로 PR 생성
-gh pr create --base upstream/develop --title "[PP-XXXX] 작업 내용" --body-file .github/PULL_REQUEST_TEMPLATE.md
-
-# upstream이 없는 경우: origin/develop을 타겟으로 PR 생성
-gh pr create --base origin/develop --title "[PP-XXXX] 작업 내용" --body-file .github/PULL_REQUEST_TEMPLATE.md
-
-# 자동으로 적절한 타겟 선택 (간단 버전) - 기본적으로 develop 브랜치 타겟
-gh pr create --base develop
-
-# 사용자 지정 브랜치로 PR 생성 (예: hotfix, release 브랜치 등)
-gh pr create --base feature/hotfix-branch --title "[PP-XXXX] 작업 내용"
-```
-
-**브랜치 전략:**
-```bash
-# upstream이 있는 경우
-git fetch upstream
-git checkout develop
-git merge upstream/develop
-git checkout -b feature/PP-XXXX-description
-# 작업 완료 후
-gh pr create --base upstream/develop
-
-# upstream이 없는 경우 (origin만 있는 경우)
-git fetch origin
-git checkout develop
-git merge origin/develop
-git checkout -b feature/PP-XXXX-description
-# 작업 완료 후
-gh pr create --base origin/develop
-```
-
 ### 기본 설정
-
-**타겟 브랜치 설정:**
-- **기본 타겟**: `upstream/develop` 또는 `origin/develop` 
-- **우선순위**: `upstream/develop` > `origin/develop`  
-- upstream이 설정된 경우: upstream/develop을 타겟으로 사용
-- upstream이 없는 경우: origin/develop을 타겟으로 사용
-- **사용자 지정 브랜치**: 사용자가 명시적으로 지정한 브랜치는 허용 (예: `--base feature/hotfix`)
-
 **필수 확인사항:**
 
 **코드 품질:**
