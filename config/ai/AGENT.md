@@ -73,3 +73,10 @@ Anti-Pattern Rules
     Don't ignore failures or warnings.
     Don't introduce unfounded optimizations or abstractions.
     Don't abuse broad exceptions.
+
+Reference Documents
+
+    PR Guidelines: Refer to PR.md or PR_KO.md files.
+    Commit Guidelines: Refer to commit.md file.
+    When creating PRs, reviewing, or merging, always check and follow these guides.
+    For commit messages, commit strategies, and Git workflows, follow the rules in commit.md.
