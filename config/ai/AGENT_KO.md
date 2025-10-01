@@ -72,10 +72,3 @@ AGENTS_KO.md
     실패나 경고를 무시하지 않는다.
     근거 없는 최적화나 추상화를 도입하지 않는다.
     광범위한 예외를 남용하지 않는다.
-
-참조 문서 (Reference Documents)
-
-    PR 관련 가이드: PR.md 또는 PR_KO.md 파일을 참조한다.
-    Commit 관련 가이드: commit.md 파일을 참조한다.
-    PR 작성, 리뷰, 병합 시에는 해당 가이드를 반드시 확인하고 준수한다.
-    Commit 메시지 작성, 커밋 전략, Git 워크플로우는 commit.md의 규칙을 따른다.
