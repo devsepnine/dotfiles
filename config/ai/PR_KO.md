@@ -208,7 +208,6 @@ gh pr merge <PR번호> --squash
 
 ### PR 작성 언어 가이드
 
-**한글로 작성하되 기술명은 영어 유지**
-- 설명, 요약: 한글 작성
+**기술명은 영어 유지 작성언어는 요청 언어 없으면 영어**
 - 기술 용어: 영어 유지 (API, database, migration, refactoring 등)
 - 예시: "API 응답 속도 개선을 위한 caching 로직 추가"
