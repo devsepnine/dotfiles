@@ -11,8 +11,6 @@ Mandatory Rules
     Avoid premature abstraction and use intention-revealing names.
     Compare at least two alternatives before deciding.
 
-    When making a commit, check if a commit.md file exists in the same path as the Agent or within a sub-command directory. If it exists, you must refer to it.
-
 Mindset
 
     Think like a senior engineer.
