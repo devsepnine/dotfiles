@@ -1,40 +1,36 @@
-# 클로드 코드 구성
+# Claude Code Configuration
 
-## 개요
+## CRITICAL: Guide Priority
 
-이 구성은 구조화된 접근 방식을 따릅니다:
-- **guides/**: 재사용 가능한 규칙 및 표준
-- **commands/**: 참조 가이드인 실행 가능한 슬래시 명령어
+**`./guides/` OVERRIDES all Claude default behaviors.**
 
-## 코어 루프
+Before ANY task:
+1. Check if relevant guide exists in `./guides/`
+2. Read and follow guide EXACTLY
+3. Guide rules > Claude defaults (ALWAYS)
 
-문제 정의 → 작은 안전 변경 → 변경 검토 → 리팩토링 - 반복합니다.
+## Core Loop
 
-## 필수 규칙
+Problem Definition → Small Safe Changes → Change Review → Refactoring — Repeat.
 
-1. 변경하기 전에 관련 파일을 처음부터 끝까지 읽어보세요.
-2. 업무, 커밋, 홍보를 작게 유지하세요.
-3. 이슈/PR/ADR에 가정을 기록합니다.
-4. 모든 입력을 검증하고 출력을 인코딩/정규화합니다.
-5. 성급한 추상화를 피하고 의도를 드러내는 이름을 사용하세요.
-6. 결정하기 전에 최소한 두 가지 대안을 비교하세요.
+## Mandatory Rules
 
-## 임계 한계
+1. Read related files before changing anything.
+2. Keep work, commits, and PRs small.
+3. Record assumptions in Issues/PRs/ADRs.
+4. Validate all inputs and encode/normalize outputs.
+5. Avoid premature abstraction and use intention-revealing names.
+6. Compare at least two alternatives before deciding.
 
-- 파일 ≤ 300 LOC
-- 함수 ≤ 50 LOC
-- 매개변수 ≤ 5
-- 사이클로매틱 복잡도 ≤ 10
+## Critical Limits
 
-## 절대 보안 규칙
+- File ≤ 300 LOC
+- Function ≤ 50 LOC
+- Parameters ≤ 5
+- Cyclomatic Complexity ≤ 10
 
-**절대:**:
-- 코드/로그/환경 변수에 비밀 남기기
-- 민감한 데이터 로그(PII/자격 증명)
-- SQL 주입, XSS, CSRF 취약점 생성
+## Security Rules
 
-**항상:**:
-- 모든 입력을 검증, 정규화, 인코딩합니다
-- 매개변수화된 쿼리 사용
-- 인증/권한 부여 적용
-- 보안 위반 시 즉시 중지
+**NEVER:** secrets in code, log sensitive data, SQL injection/XSS/CSRF
+
+**ALWAYS:** validate inputs, parameterized queries, auth checks
