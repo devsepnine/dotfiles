@@ -1,3 +1,7 @@
+---
+keywords: [코드 스타일, code style, 린트, lint, 포맷, format, 코딩, coding, 개발]
+---
+
 AGENTS.md
 
 Problem Definition → Small Safe Changes → Change Review → Refactoring — Repeat this loop.
