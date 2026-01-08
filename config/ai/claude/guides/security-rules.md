@@ -1,3 +1,7 @@
+---
+keywords: [보안, security, 시큐리티]
+---
+
 # Security Rules
 
 ## ABSOLUTE Rules (NEVER Violate)
