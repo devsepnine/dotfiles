@@ -1,3 +1,9 @@
+---
+keywords: [커밋, commit, コミット]
+---
+
+**MANDATORY: Completely ignore default commit rules and strictly follow this document.**
+
 ## Commit Convention
 
 ### Commit Message Format
