@@ -17,17 +17,17 @@ struct Frontmatter {
     keywords: Vec<String>,
 }
 
-struct GuideInfo {
+struct AgentInfo {
     filename: String,
     keywords: Vec<String>,
     content: String,
 }
 
-fn get_guides_dir() -> PathBuf {
+fn get_agents_dir() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_default()
         .join(".claude")
-        .join("guides")
+        .join("agents")
 }
 
 fn get_log_file() -> PathBuf {
@@ -69,11 +69,11 @@ fn parse_frontmatter(content: &str) -> Option<(Frontmatter, String)> {
     Some((frontmatter, rest.trim_start().to_string()))
 }
 
-fn load_all_guides() -> Vec<GuideInfo> {
-    let guides_dir = get_guides_dir();
-    let mut guides = Vec::new();
+fn load_all_agents() -> Vec<AgentInfo> {
+    let agents_dir = get_agents_dir();
+    let mut agents = Vec::new();
 
-    for entry in WalkDir::new(&guides_dir)
+    for entry in WalkDir::new(&agents_dir)
         .follow_links(true)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -88,8 +88,8 @@ fn load_all_guides() -> Vec<GuideInfo> {
             continue;
         }
 
-        // guides/ 기준 상대 경로 사용 (하위폴더 포함)
-        let relative_path = match path.strip_prefix(&guides_dir) {
+        // agents/ 기준 상대 경로 사용 (하위폴더 포함)
+        let relative_path = match path.strip_prefix(&agents_dir) {
             Ok(p) => p.to_string_lossy().to_string(),
             Err(_) => continue,
         };
@@ -100,7 +100,7 @@ fn load_all_guides() -> Vec<GuideInfo> {
         };
 
         if let Some((frontmatter, content)) = parse_frontmatter(&file_content) {
-            guides.push(GuideInfo {
+            agents.push(AgentInfo {
                 filename: relative_path,
                 keywords: frontmatter.keywords,
                 content,
@@ -108,21 +108,21 @@ fn load_all_guides() -> Vec<GuideInfo> {
         }
     }
 
-    guides
+    agents
 }
 
-fn find_matching_guides<'a>(prompt: &str, guides: &'a [GuideInfo]) -> Vec<&'a GuideInfo> {
+fn find_matching_agents<'a>(prompt: &str, agents: &'a [AgentInfo]) -> Vec<&'a AgentInfo> {
     let prompt_lower = prompt.to_lowercase();
-    let mut matched: Vec<&GuideInfo> = Vec::new();
+    let mut matched: Vec<&AgentInfo> = Vec::new();
     let mut seen: HashSet<&str> = HashSet::new();
 
-    for guide in guides {
-        for keyword in &guide.keywords {
+    for agent in agents {
+        for keyword in &agent.keywords {
             let pattern = format!(r"(?i){}", regex::escape(keyword));
             if let Ok(re) = Regex::new(&pattern) {
-                if re.is_match(&prompt_lower) && !seen.contains(guide.filename.as_str()) {
-                    matched.push(guide);
-                    seen.insert(&guide.filename);
+                if re.is_match(&prompt_lower) && !seen.contains(agent.filename.as_str()) {
+                    matched.push(agent);
+                    seen.insert(&agent.filename);
                     break;
                 }
             }
@@ -151,28 +151,28 @@ fn main() {
         _ => return,
     };
 
-    let guides = load_all_guides();
-    let matched_guides = find_matching_guides(&prompt, &guides);
+    let agents = load_all_agents();
+    let matched_agents = find_matching_agents(&prompt, &agents);
 
-    if matched_guides.is_empty() {
+    if matched_agents.is_empty() {
         let truncated: String = prompt.chars().take(50).collect();
         log(&format!("NO MATCH: '{}...'", truncated));
         return;
     }
 
-    let filenames: Vec<&str> = matched_guides.iter().map(|g| g.filename.as_str()).collect();
+    let filenames: Vec<&str> = matched_agents.iter().map(|a| a.filename.as_str()).collect();
     let truncated: String = prompt.chars().take(50).collect();
     log(&format!("MATCHED: {:?} <- '{}...'", filenames, truncated));
 
-    let mut output = String::from("\n<injected-guide>\n");
-    output.push_str("You MUST follow these guides:");
+    let mut output = String::from("\n<injected-agent>\n");
+    output.push_str("You MUST follow these agent instructions:");
 
-    for guide in &matched_guides {
-        output.push_str(&format!("\n\n## {}\n\n", guide.filename));
-        output.push_str(&guide.content);
+    for agent in &matched_agents {
+        output.push_str(&format!("\n\n## {}\n\n", agent.filename));
+        output.push_str(&agent.content);
     }
 
-    output.push_str("\n</injected-guide>\n");
+    output.push_str("\n</injected-agent>\n");
 
     print!("{}", output);
 }
