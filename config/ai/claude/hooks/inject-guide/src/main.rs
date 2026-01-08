@@ -141,7 +141,7 @@ fn main() {
     let hook_input: HookInput = match serde_json::from_str(&input) {
         Ok(v) => v,
         Err(_) => {
-            log("ERROR: JSON 파싱 실패");
+            log("ERROR: JSON parsing failed.");
             return;
         }
     };
@@ -165,7 +165,7 @@ fn main() {
     log(&format!("MATCHED: {:?} <- '{}...'", filenames, truncated));
 
     let mut output = String::from("\n<injected-guide>\n");
-    output.push_str("다음 가이드를 반드시 따라야 합니다:");
+    output.push_str("You MUST follow these guides:");
 
     for guide in &matched_guides {
         output.push_str(&format!("\n\n## {}\n\n", guide.filename));
