@@ -1,0 +1,4 @@
+name: inject_guide
+event: UserPromptSubmit
+type: command
+timeout: 10000

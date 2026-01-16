@@ -53,4 +53,4 @@ The following checks must be performed before starting any task:
 ### ALWAYS:
 * Implement strict input validation.
 * Use parameterized queries.
-* Perform rigorous authentication/authorization checks.
+* Perform rigorous authentication/authorization checks

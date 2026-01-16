@@ -1,0 +1,68 @@
+servers:
+  # Documentation & Research
+  - name: context7
+    description: "라이브러리 문서 검색 (Context7)"
+    command: "npx -y @upstash/context7-mcp"
+    category: docs
+
+  - name: ietf-datatracker
+    description: "IETF RFC 문서 검색"
+    command: "npx -y ietf-datatracker-mcp"
+    category: docs
+
+  - name: apipedia
+    description: "NSUS API 문서 조회"
+    type: http
+    url: "https://docs.ggpayhub.com/mcp"
+    category: docs
+
+  # Reasoning & Thinking
+  - name: sequential-thinking
+    description: "순차적 사고 (Chain of Thought)"
+    command: "npx -y @modelcontextprotocol/server-sequential-thinking"
+    category: reasoning
+
+  # Framework Support
+  - name: next-devtools
+    description: "Next.js 개발 지원"
+    command: "npx -y next-devtools-mcp@latest"
+    category: framework
+
+  # UI Components
+  - name: shadcn-ui
+    description: "shadcn/ui 컴포넌트"
+    command: "npx shadcn@latest mcp"
+    category: ui
+
+  # Automation
+  - name: playwright
+    description: "브라우저 자동화 (Playwright)"
+    command: "npx -y @playwright/mcp@latest"
+    category: automation
+
+  # Productivity
+  - name: atlassian
+    description: "Jira/Confluence 연동"
+    command: "uvx mcp-atlassian"
+    category: productivity
+    env:
+      - CONFLUENCE_URL
+      - CONFLUENCE_USERNAME
+      - CONFLUENCE_API_TOKEN
+      - JIRA_URL
+      - JIRA_USERNAME
+      - JIRA_API_TOKEN
+
+
+  - name: atlassian-remote
+    description: "official atlassian-remote"
+    command: "atlassian-remote --transport sse https://mcp.atlassian.com/v1/mcp"
+    category: productivity
+    env:
+
+  - name: github
+    description: "GitHub 저장소/이슈/PR 관리"
+    command: "npx -y @modelcontextprotocol/server-github"
+    category: productivity
+    env:
+      - GITHUB_PERSONAL_ACCESS_TOKEN

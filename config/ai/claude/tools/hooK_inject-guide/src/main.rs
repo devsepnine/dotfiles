@@ -31,10 +31,10 @@ fn get_agents_dir() -> PathBuf {
 }
 
 fn get_log_file() -> PathBuf {
-    dirs::home_dir()
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
         .unwrap_or_default()
-        .join(".claude")
-        .join("hooks")
         .join("inject-guide.log")
 }
 

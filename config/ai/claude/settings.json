@@ -1,16 +1,4 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/inject-guide-rs"
-          }
-        ]
-      }
-    ]
-  },
   "enabledPlugins": {
     "document-skills@anthropic-agent-skills": true,
     "rust-analyzer-lsp@claude-plugins-official": true
