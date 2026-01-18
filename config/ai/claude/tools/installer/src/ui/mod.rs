@@ -87,7 +87,7 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
         View::EnvInput => "[Enter] Submit  [Esc] Cancel  [Backspace] Delete",
         View::ProjectPath => "[Enter] Confirm  [Esc] Cancel  [Backspace] Delete",
         View::Installing => {
-            if app.processing_queue.is_empty() {
+            if app.processing_complete {
                 "[Enter/q] Close"
             } else if app.is_removing {
                 "Removing..."

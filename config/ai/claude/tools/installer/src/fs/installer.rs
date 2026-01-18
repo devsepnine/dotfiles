@@ -1,11 +1,11 @@
 use std::path::Path;
-use std::process::Command;
 use anyhow::Result;
 use serde_json::Value;
 
 use crate::component::{Component, ComponentType, HookConfig};
 use crate::mcp::{McpServer, McpScope};
 use crate::plugin::Plugin;
+use super::create_claude_command;
 
 pub fn install_component(component: &Component, _source_dir: &Path, dest_dir: &Path) -> Result<()> {
     match &component.component_type {
@@ -53,7 +53,7 @@ fn copy_file(component: &Component) -> Result<()> {
 
 pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Option<&str>, env_values: &[(String, String)]) -> Result<String> {
     // Build command: claude mcp add [options] <name> [commandOrUrl] [args...]
-    let mut command = Command::new("claude");
+    let mut command = create_claude_command();
     command.arg("mcp").arg("add");
 
     // Add scope flag
@@ -102,17 +102,12 @@ pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Opt
 }
 
 pub fn remove_mcp_server(server: &McpServer) -> Result<()> {
-    let cmd = server.remove_command();
-    let parts: Vec<&str> = cmd.split_whitespace().collect();
-
-    if parts.len() < 2 {
-        anyhow::bail!("Invalid remove command for MCP server: {}", server.def.name);
-    }
+    // Build command: claude mcp remove <name>
+    let mut command = create_claude_command();
+    command.args(["mcp", "remove", &server.def.name]);
 
     // Capture output to avoid TUI corruption
-    let output = Command::new(&parts[0])
-        .args(&parts[1..])
-        .output()?;
+    let output = command.output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -125,18 +120,12 @@ pub fn install_plugin(plugin: &Plugin) -> Result<String> {
     // First, ensure the marketplace is added
     ensure_marketplace_added(plugin)?;
 
-    // Now install the plugin with marketplace format
-    let cmd = plugin.install_command();
-    let parts: Vec<&str> = cmd.split_whitespace().collect();
+    // Build command: claude plugin install plugin@marketplace
+    let plugin_ref = format!("{}@{}", plugin.def.name, plugin.def.marketplace);
+    let mut command = create_claude_command();
+    command.args(["plugin", "install", &plugin_ref]);
 
-    if parts.len() < 2 {
-        anyhow::bail!("Invalid install command for plugin: {}", plugin.def.name);
-    }
-
-    // Execute: claude plugin install plugin@marketplace
-    let output = Command::new(&parts[0])
-        .args(&parts[1..])
-        .output()?;
+    let output = command.output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -149,9 +138,9 @@ pub fn install_plugin(plugin: &Plugin) -> Result<String> {
 
 fn ensure_marketplace_added(plugin: &Plugin) -> Result<()> {
     // Check if marketplace is already added
-    let list_output = Command::new("claude")
-        .args(["plugin", "marketplace", "list"])
-        .output()?;
+    let mut list_cmd = create_claude_command();
+    list_cmd.args(["plugin", "marketplace", "list"]);
+    let list_output = list_cmd.output()?;
 
     if list_output.status.success() {
         let stdout = String::from_utf8_lossy(&list_output.stdout);
@@ -161,17 +150,11 @@ fn ensure_marketplace_added(plugin: &Plugin) -> Result<()> {
         }
     }
 
-    // Add the marketplace
-    let cmd = plugin.marketplace_add_command();
-    let parts: Vec<&str> = cmd.split_whitespace().collect();
+    // Add the marketplace: claude plugin marketplace add <source-url>
+    let mut command = create_claude_command();
+    command.args(["plugin", "marketplace", "add", &plugin.def.source]);
 
-    if parts.len() < 2 {
-        anyhow::bail!("Invalid marketplace add command for: {}", plugin.def.marketplace);
-    }
-
-    let output = Command::new(&parts[0])
-        .args(&parts[1..])
-        .output()?;
+    let output = command.output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -182,17 +165,12 @@ fn ensure_marketplace_added(plugin: &Plugin) -> Result<()> {
 }
 
 pub fn remove_plugin(plugin: &Plugin) -> Result<()> {
-    let cmd = plugin.remove_command();
-    let parts: Vec<&str> = cmd.split_whitespace().collect();
-
-    if parts.len() < 2 {
-        anyhow::bail!("Invalid remove command for plugin: {}", plugin.def.name);
-    }
+    // Build command: claude plugin uninstall <name>
+    let mut command = create_claude_command();
+    command.args(["plugin", "uninstall", &plugin.def.name]);
 
     // Capture output to avoid TUI corruption
-    let output = Command::new(&parts[0])
-        .args(&parts[1..])
-        .output()?;
+    let output = command.output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -327,9 +305,18 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
     let settings_path = dest_dir.join("settings.json");
 
     // Determine hook command path
-    let hook_command = format!("~/.claude/hooks/{}", component.dest_path.file_name()
+    // Use forward slash and tilde for cross-platform compatibility in settings.json
+    let binary_name = component.dest_path.file_name()
         .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| config.name.clone()));
+        .unwrap_or_else(|| {
+            // On Windows, add .exe extension
+            if cfg!(windows) {
+                format!("{}.exe", config.name)
+            } else {
+                config.name.clone()
+            }
+        });
+    let hook_command = format!("~/.claude/hooks/{}", binary_name);
 
     // Read or create settings
     let mut settings: Value = if settings_path.exists() {

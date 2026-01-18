@@ -1,11 +1,11 @@
 use std::path::Path;
-use std::process::Command;
 use anyhow::Result;
 use walkdir::WalkDir;
 
 use crate::component::{Component, ComponentType, HookConfig, InstallStatus};
 use crate::mcp::{McpCatalog, McpServer, McpStatus};
 use crate::plugin::{parse_plugins_yaml, Plugin, PluginDef, PluginStatus};
+use super::create_claude_command;
 
 pub fn scan_components(source_dir: &Path, dest_dir: &Path) -> Result<Vec<Component>> {
     let mut components = Vec::new();
@@ -127,12 +127,19 @@ fn scan_hooks(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
-        let binary_path = path.join(&config.name);
+        // On Windows, look for .exe extension
+        let binary_name = if cfg!(windows) {
+            format!("{}.exe", config.name)
+        } else {
+            config.name.clone()
+        };
+
+        let binary_path = path.join(&binary_name);
         if !binary_path.exists() {
             continue;
         }
 
-        let dest_path = dest_dir.join("hooks").join(&config.name);
+        let dest_path = dest_dir.join("hooks").join(&binary_name);
         let status = determine_status(&binary_path, &dest_path)?;
 
         let component = Component::new(
@@ -236,9 +243,9 @@ pub fn scan_mcp_servers(source_dir: &Path) -> Result<Vec<McpServer>> {
 }
 
 fn get_installed_mcp_servers() -> Vec<String> {
-    let output = Command::new("claude")
-        .args(["mcp", "list"])
-        .output();
+    let mut cmd = create_claude_command();
+    cmd.args(["mcp", "list"]);
+    let output = cmd.output();
 
     match output {
         Ok(out) if out.status.success() => {

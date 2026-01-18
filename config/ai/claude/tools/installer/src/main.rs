@@ -121,11 +121,16 @@ fn main() -> Result<()> {
 }
 
 fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
-    use std::sync::{Arc, Mutex};
+    use std::sync::mpsc::{self, TryRecvError};
     use std::thread;
 
+    // Channel for process results
+    let (process_tx, process_rx) = mpsc::channel::<Result<String>>();
+    let mut processing_active = false;
+
+    // Channel for refresh results
     type RefreshResult = (Vec<component::Component>, Vec<mcp::McpServer>, Vec<plugin::Plugin>);
-    let refresh_result: Arc<Mutex<Option<Result<RefreshResult>>>> = Arc::new(Mutex::new(None));
+    let (refresh_tx, refresh_rx) = mpsc::channel::<Result<RefreshResult>>();
 
     loop {
         terminal.draw(|f| ui::draw(f, app))?;
@@ -144,17 +149,62 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut A
                 // Update animation
                 app.tick();
 
-                // Process current state
-                if !app.processing_queue.is_empty() {
-                    // Process next item
-                    let done = app.process_step()?;
-                    if done {
-                        app.start_finish_processing();
+                // Check if a processing thread completed
+                if processing_active {
+                    match process_rx.try_recv() {
+                        Ok(result) => {
+                            processing_active = false;
+                            match result {
+                                Ok(msg) => app.processing_log.push(msg),
+                                Err(e) => app.processing_log.push(format!("[ERR] {}", e)),
+                            }
+                            // Update progress
+                            let progress = app.processing_progress.unwrap_or(0) + 1;
+                            app.processing_progress = Some(progress);
+
+                            // Check if all done
+                            if app.processing_queue.is_empty() {
+                                app.start_finish_processing();
+                            }
+                        }
+                        Err(TryRecvError::Empty) => {
+                            // Still processing, continue
+                        }
+                        Err(TryRecvError::Disconnected) => {
+                            // Thread crashed, mark as error
+                            processing_active = false;
+                            app.processing_log.push("[ERR] Process thread crashed".to_string());
+                            if app.processing_queue.is_empty() {
+                                app.start_finish_processing();
+                            }
+                        }
                     }
-                } else if app.needs_refresh && !app.refreshing {
+                }
+
+                // Start next item if not currently processing
+                if !processing_active && !app.processing_queue.is_empty() {
+                    let idx = app.processing_queue.remove(0);
+                    processing_active = true;
+
+                    // Add "Installing/Removing..." message
+                    let item_name = get_item_name(app, idx);
+                    let action = if app.is_removing { "Removing" } else { "Installing" };
+                    app.processing_log.push(format!("{} {}...", action, item_name));
+
+                    let tx_clone = process_tx.clone();
+                    let is_removing = app.is_removing;
+                    let tab = app.tab;
+                    let process_data = prepare_process_data(app, idx);
+
+                    thread::spawn(move || {
+                        let result = execute_process_step(process_data, is_removing, tab);
+                        let _ = tx_clone.send(result);
+                    });
+                } else if !processing_active && app.processing_queue.is_empty() && app.needs_refresh && !app.refreshing {
                     // Start background refresh thread
                     app.refreshing = true;
-                    let result_clone = Arc::clone(&refresh_result);
+
+                    let tx_clone = refresh_tx.clone();
                     let source_dir = app.source_dir.clone();
                     let dest_dir = app.dest_dir.clone();
 
@@ -168,22 +218,32 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut A
                             Ok((components, mcp_servers, plugins))
                         })();
 
-                        *result_clone.lock().unwrap() = Some(result);
+                        let _ = tx_clone.send(result);
                     });
                 } else if app.refreshing {
                     // Check if refresh thread is done
-                    let mut result_lock = refresh_result.lock().unwrap();
-                    if let Some(result) = result_lock.take() {
-                        match result {
-                            Ok((components, mcp_servers, plugins)) => {
-                                app.apply_refresh_result(components, mcp_servers, plugins);
+                    match refresh_rx.try_recv() {
+                        Ok(result) => {
+                            match result {
+                                Ok((components, mcp_servers, plugins)) => {
+                                    app.apply_refresh_result(components, mcp_servers, plugins);
+                                }
+                                Err(e) => {
+                                    app.processing_log.push(format!("[ERROR] Refresh failed: {}", e));
+                                    app.needs_refresh = false;
+                                    app.refreshing = false;
+                                    app.processing_complete = true;
+                                }
                             }
-                            Err(e) => {
-                                app.processing_log.push(format!("[ERROR] Refresh failed: {}", e));
-                                app.needs_refresh = false;
-                                app.refreshing = false;
-                                app.processing_complete = true;
-                            }
+                        }
+                        Err(TryRecvError::Empty) => {
+                            // Still refreshing
+                        }
+                        Err(TryRecvError::Disconnected) => {
+                            app.processing_log.push("[ERROR] Refresh thread crashed".to_string());
+                            app.needs_refresh = false;
+                            app.refreshing = false;
+                            app.processing_complete = true;
                         }
                     }
                 }
@@ -287,7 +347,8 @@ fn handle_diff_input(app: &mut App, key: KeyCode) -> Result<()> {
 fn handle_installing_input(app: &mut App, key: KeyCode) -> Result<()> {
     match key {
         KeyCode::Char('q') | KeyCode::Esc | KeyCode::Enter => {
-            if app.processing_queue.is_empty() {
+            // Only allow exit when processing is fully complete
+            if app.processing_complete {
                 app.close_processing();
             }
         }
@@ -314,5 +375,135 @@ fn handle_project_path_input(app: &mut App, key: KeyCode) {
         KeyCode::Backspace => app.project_path_backspace(),
         KeyCode::Char(c) => app.project_path_char(c),
         _ => {}
+    }
+}
+
+/// Data needed for async processing
+#[derive(Clone)]
+enum ProcessData {
+    Component {
+        name: String,
+        source_path: std::path::PathBuf,
+        dest_path: std::path::PathBuf,
+        component_type: component::ComponentType,
+        hook_config: Option<component::HookConfig>,
+        source_dir: std::path::PathBuf,
+        dest_dir: std::path::PathBuf,
+    },
+    McpServer {
+        server: mcp::McpServer,
+        scope: mcp::McpScope,
+        project_path: Option<String>,
+        env_values: Vec<(String, String)>,
+    },
+    Plugin {
+        plugin: plugin::Plugin,
+    },
+}
+
+fn prepare_process_data(app: &App, idx: usize) -> ProcessData {
+    if app.tab == app::Tab::McpServers {
+        let server = app.mcp_servers[idx].clone();
+        let env_values = if app.env_input_server_idx == Some(idx) {
+            app.env_input_values.clone()
+        } else {
+            Vec::new()
+        };
+        let project_path = if app.mcp_scope == mcp::McpScope::Local {
+            Some(app.mcp_project_path.clone())
+        } else {
+            None
+        };
+        ProcessData::McpServer {
+            server,
+            scope: app.mcp_scope,
+            project_path,
+            env_values,
+        }
+    } else if app.tab == app::Tab::Plugins {
+        ProcessData::Plugin {
+            plugin: app.plugins[idx].clone(),
+        }
+    } else {
+        let c = &app.components[idx];
+        ProcessData::Component {
+            name: c.name.clone(),
+            source_path: c.source_path.clone(),
+            dest_path: c.dest_path.clone(),
+            component_type: c.component_type.clone(),
+            hook_config: c.hook_config.clone(),
+            source_dir: app.source_dir.clone(),
+            dest_dir: app.dest_dir.clone(),
+        }
+    }
+}
+
+fn get_item_name(app: &App, idx: usize) -> String {
+    if app.tab == app::Tab::McpServers {
+        app.mcp_servers.get(idx).map(|s| s.def.name.clone()).unwrap_or_default()
+    } else if app.tab == app::Tab::Plugins {
+        app.plugins.get(idx).map(|p| p.def.name.clone()).unwrap_or_default()
+    } else {
+        app.components.get(idx).map(|c| c.name.clone()).unwrap_or_default()
+    }
+}
+
+fn execute_process_step(data: ProcessData, is_removing: bool, _tab: app::Tab) -> Result<String> {
+    match data {
+        ProcessData::McpServer { server, scope, project_path, env_values } => {
+            let name = server.def.name.clone();
+            if is_removing {
+                match fs::installer::remove_mcp_server(&server) {
+                    Ok(_) => Ok(format!("[OK] Removed {}", name)),
+                    Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
+                }
+            } else {
+                match fs::installer::install_mcp_server(&server, scope, project_path.as_deref(), &env_values) {
+                    Ok(_) => Ok(format!("[OK] Installed {}", name)),
+                    Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
+                }
+            }
+        }
+        ProcessData::Plugin { plugin } => {
+            let name = plugin.def.name.clone();
+            if is_removing {
+                match fs::installer::remove_plugin(&plugin) {
+                    Ok(_) => Ok(format!("[OK] Removed {}", name)),
+                    Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
+                }
+            } else {
+                match fs::installer::install_plugin(&plugin) {
+                    Ok(_) => Ok(format!("[OK] Installed {}", name)),
+                    Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
+                }
+            }
+        }
+        ProcessData::Component { name, source_path, dest_path, component_type, hook_config, source_dir, dest_dir } => {
+            if is_removing {
+                if dest_path.exists() {
+                    match std::fs::remove_file(&dest_path) {
+                        Ok(_) => Ok(format!("[OK] Removed {}", name)),
+                        Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
+                    }
+                } else {
+                    Ok(format!("[SKIP] {} (not installed)", name))
+                }
+            } else {
+                // Create a temporary Component for install
+                let comp = component::Component {
+                    name: name.clone(),
+                    source_path,
+                    dest_path,
+                    component_type,
+                    hook_config,
+                    status: component::InstallStatus::New,
+                    selected: false,
+                };
+                match fs::installer::install_component(&comp, &source_dir, &dest_dir) {
+                    Ok(_) => Ok(format!("[OK] Installed {}", name)),
+                    Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
+                }
+            }
+        }
     }
 }

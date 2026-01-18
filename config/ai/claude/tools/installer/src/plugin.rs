@@ -37,18 +37,6 @@ impl Plugin {
         }
     }
 
-    pub fn install_command(&self) -> String {
-        format!("claude plugin install {}@{}", self.def.name, self.def.marketplace)
-    }
-
-    pub fn remove_command(&self) -> String {
-        format!("claude plugin uninstall {}", self.def.name)
-    }
-
-    pub fn marketplace_add_command(&self) -> String {
-        format!("claude plugin marketplace add {}", self.def.source)
-    }
-
     pub fn short_repo(&self) -> String {
         // https://github.com/anthropics/claude-plugins-official.git -> anthropics/claude-plugins-official
         self.def

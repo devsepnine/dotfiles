@@ -88,10 +88,6 @@ impl McpServer {
     pub fn is_http(&self) -> bool {
         matches!(self.def.r#type, Some(McpType::Http))
     }
-
-    pub fn remove_command(&self) -> String {
-        format!("claude mcp remove {}", self.def.name)
-    }
 }
 
 #[derive(Debug, Deserialize)]
