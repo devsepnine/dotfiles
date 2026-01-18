@@ -71,7 +71,6 @@ fn scan_directory(
 
     for entry in WalkDir::new(source_dir)
         .min_depth(1)
-        .max_depth(2)
         .into_iter()
         .filter_map(|e| e.ok())
     {

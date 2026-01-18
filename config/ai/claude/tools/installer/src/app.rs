@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use anyhow::Result;
 
@@ -6,8 +7,9 @@ use crate::mcp::{McpServer, McpScope};
 use crate::plugin::Plugin;
 use crate::fs;
 use crate::component::ComponentType;
+use crate::tree::TreeView;
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Tab {
     Agents,
     Commands,
@@ -108,7 +110,8 @@ pub struct App {
     pub should_quit: bool,
 
     pub components: Vec<Component>,
-    pub list_index: usize, // Index within current tab's filtered list
+    pub list_index: usize, // Index within current tab's filtered list (legacy, for MCP/Plugins)
+    pub tree_views: HashMap<Tab, TreeView>, // Tree views for component tabs
 
     pub mcp_servers: Vec<McpServer>,
     pub mcp_index: usize,
@@ -171,12 +174,16 @@ impl App {
         // Read current settings
         let (current_output_style, current_statusline) = read_current_settings(&dest_dir);
 
+        // Build tree views for each component tab
+        let tree_views = build_tree_views(&components);
+
         Ok(Self {
             tab: Tab::Agents,
             current_view: View::List,
             should_quit: false,
             components,
             list_index: 0,
+            tree_views,
             mcp_servers,
             mcp_index: 0,
             mcp_scope: McpScope::default(),
@@ -249,11 +256,8 @@ impl App {
             if len > 0 {
                 self.plugin_index = (self.plugin_index + 1) % len;
             }
-        } else {
-            let filtered = self.current_components();
-            if !filtered.is_empty() {
-                self.list_index = (self.list_index + 1) % filtered.len();
-            }
+        } else if let Some(tree) = self.tree_views.get_mut(&self.tab) {
+            tree.next();
         }
     }
 
@@ -268,18 +272,53 @@ impl App {
             if len > 0 {
                 self.plugin_index = if self.plugin_index == 0 { len - 1 } else { self.plugin_index - 1 };
             }
-        } else {
-            let filtered = self.current_components();
-            if !filtered.is_empty() {
-                self.list_index = if self.list_index == 0 { filtered.len() - 1 } else { self.list_index - 1 };
-            }
+        } else if let Some(tree) = self.tree_views.get_mut(&self.tab) {
+            tree.prev();
         }
     }
 
     /// Get the actual component index in self.components for current selection
     pub fn selected_component_index(&self) -> Option<usize> {
-        let filtered = self.current_components();
-        filtered.get(self.list_index).map(|(idx, _)| *idx)
+        if let Some(tree) = self.tree_views.get(&self.tab) {
+            tree.current_component_idx()
+        } else {
+            // Fallback for non-tree tabs
+            let filtered = self.current_components();
+            filtered.get(self.list_index).map(|(idx, _)| *idx)
+        }
+    }
+
+    /// Check if cursor is on a folder
+    pub fn is_cursor_on_folder(&self) -> bool {
+        self.tree_views.get(&self.tab)
+            .map(|t| t.is_on_folder())
+            .unwrap_or(false)
+    }
+
+    /// Toggle expand/collapse for current folder
+    pub fn toggle_folder_expand(&mut self) {
+        if let Some(tree) = self.tree_views.get_mut(&self.tab) {
+            tree.toggle_expand();
+        }
+    }
+
+    /// Expand current folder
+    pub fn expand_folder(&mut self) {
+        if let Some(tree) = self.tree_views.get_mut(&self.tab) {
+            tree.expand();
+        }
+    }
+
+    /// Collapse current folder
+    pub fn collapse_folder(&mut self) {
+        if let Some(tree) = self.tree_views.get_mut(&self.tab) {
+            tree.collapse();
+        }
+    }
+
+    /// Get current tree view
+    pub fn get_tree_view(&self) -> Option<&TreeView> {
+        self.tree_views.get(&self.tab)
     }
 
     pub fn toggle_mcp_scope(&mut self) {
@@ -325,9 +364,36 @@ impl App {
             if let Some(p) = self.plugins.get_mut(self.plugin_index) {
                 p.selected = !p.selected;
             }
+        } else if self.is_cursor_on_folder() {
+            // Toggle all components under folder
+            self.toggle_folder_selection();
         } else if let Some(idx) = self.selected_component_index() {
             if let Some(c) = self.components.get_mut(idx) {
                 c.selected = !c.selected;
+            }
+        }
+    }
+
+    /// Toggle selection for all components under current folder
+    fn toggle_folder_selection(&mut self) {
+        if let Some(tree) = self.tree_views.get(&self.tab) {
+            if let Some(node_idx) = tree.current_node_idx() {
+                let indices = tree.get_folder_component_indices(node_idx);
+                if indices.is_empty() {
+                    return;
+                }
+
+                // Check if all are currently selected
+                let all_selected = indices.iter()
+                    .all(|&idx| self.components.get(idx).map(|c| c.selected).unwrap_or(false));
+
+                // Toggle: if all selected -> deselect all, otherwise select all
+                let new_state = !all_selected;
+                for &idx in &indices {
+                    if let Some(c) = self.components.get_mut(idx) {
+                        c.selected = new_state;
+                    }
+                }
             }
         }
     }
@@ -541,6 +607,9 @@ impl App {
         self.mcp_servers = mcp_servers;
         self.plugins = plugins;
 
+        // Rebuild tree views with new components
+        self.tree_views = build_tree_views(&self.components);
+
         let verb = if self.is_removing { "Removed" } else { "Installed" };
         self.status_message = Some(format!("{} {} items", verb, self.processing_total.unwrap_or(0)));
         self.processing_log.push("[OK] Status refresh complete!".to_string());
@@ -714,4 +783,32 @@ fn find_source_dir() -> Result<PathBuf> {
     }
 
     anyhow::bail!("Cannot find source directory. Run from dotfiles root or config/ai/claude/tools/installer")
+}
+
+fn build_tree_views(components: &[Component]) -> HashMap<Tab, TreeView> {
+    let mut tree_views = HashMap::new();
+
+    // Build tree view for each component-based tab
+    let component_tabs = [
+        (Tab::Agents, ComponentType::Agents),
+        (Tab::Commands, ComponentType::Commands),
+        (Tab::Skills, ComponentType::Skills),
+        (Tab::Hooks, ComponentType::Hooks),
+        (Tab::OutputStyles, ComponentType::OutputStyles),
+        (Tab::Statusline, ComponentType::Statusline),
+        (Tab::Config, ComponentType::ConfigFile),
+    ];
+
+    for (tab, comp_type) in component_tabs {
+        let filtered: Vec<(usize, &Component)> = components
+            .iter()
+            .enumerate()
+            .filter(|(_, c)| c.component_type == comp_type)
+            .collect();
+
+        let tree = TreeView::build_from_components(components, &filtered);
+        tree_views.insert(tab, tree);
+    }
+
+    tree_views
 }

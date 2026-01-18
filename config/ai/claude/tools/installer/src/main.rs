@@ -3,6 +3,7 @@ mod component;
 mod mcp;
 mod plugin;
 mod fs;
+mod tree;
 mod ui;
 
 use std::io;
@@ -294,7 +295,26 @@ fn handle_list_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) -> Re
             }
         }
         KeyCode::BackTab => app.prev_tab(), // Some terminals send BackTab for Shift+Tab
-        // Number keys 1-8 for direct tab selection
+        // Arrow keys: context-sensitive for tree view
+        KeyCode::Left | KeyCode::Char('h') => {
+            if app.is_cursor_on_folder() {
+                // On folder: collapse it
+                app.collapse_folder();
+            } else {
+                // On file or MCP/Plugins: prev tab
+                app.prev_tab();
+            }
+        }
+        KeyCode::Right | KeyCode::Char('l') => {
+            if app.is_cursor_on_folder() {
+                // On folder: expand it
+                app.expand_folder();
+            } else {
+                // On file or MCP/Plugins: next tab
+                app.next_tab();
+            }
+        }
+        // Number keys 1-9 for direct tab selection
         KeyCode::Char('1') => app.set_tab(0),
         KeyCode::Char('2') => app.set_tab(1),
         KeyCode::Char('3') => app.set_tab(2),
@@ -312,7 +332,16 @@ fn handle_list_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) -> Re
         KeyCode::Char('a') => app.select_all(),
         KeyCode::Char('n') => app.deselect_all(),
         // Actions
-        KeyCode::Char('d') | KeyCode::Enter => app.show_diff()?,
+        KeyCode::Enter => {
+            if app.is_cursor_on_folder() {
+                // On folder: toggle expand/collapse
+                app.toggle_folder_expand();
+            } else {
+                // On file: show diff
+                app.show_diff()?;
+            }
+        }
+        KeyCode::Char('d') => app.show_diff()?,
         KeyCode::Char('i') => app.install_selected()?,
         KeyCode::Char('r') => app.remove_selected()?,
         KeyCode::Char('s') => {
