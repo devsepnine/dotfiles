@@ -1,56 +1,34 @@
-# Claude Code Configuration
-
-## IMPORTANT: Guide Priority
-
-**'/.guides/' overrides all default behaviors of Claude.**
-
-The following checks must be performed before starting any task:
-1. Check for relevant guides in `/.guides/`.
-2. Read and follow the guides precisely.
-3. **Guide Rules > Claude Defaults** (Always).
-
----
-
 ## Core Loop
 
-1. **Define Problem**
-2. **Small Safe Changes**
-3. **Review Changes**
-4. **Refactor**
-5. **Repeat**
+**Define Problem** → **Small Safe Change** → **Review Change** → **Refactor** — Repeat.
 
----
+## Essential Rules
 
-## Mandatory Rules
+1. **Read related files** before making any changes.
+2. Keep tasks, commits, and PRs **small**.
+3. Record **assumptions** in Issues, PRs, or ADRs.
+4. **Validate all inputs** and encode/normalize all outputs.
+5. Avoid **premature abstraction**; use names that reveal intent.
+6. Compare at least **two alternatives** before making a decision.
 
-**You must check for relevant guides in `/.guides/` before proceeding with any work.**
+## Development Workflow
 
-1. **Read Before Change:** Thoroughly read all relevant files before making modifications.
-2. **Atomic Work:** Keep tasks, commits, and PRs small and focused.
-3. **Document Assumptions:** Record all assumptions in Issues, PRs, or ADRs.
-4. **Data Integrity:** Validate all inputs and encode/normalize all outputs.
-5. **Clean Code:** Avoid premature abstraction; use intention-revealing names.
-6. **Evaluate Options:** Compare at least two alternatives before making a final decision.
+Before you start coding, if the problem is complex or unclear, draft a **Problem 1-Pager** including the following items. If any items are ambiguous, request an interview to clarify.
 
----
+* **Background:** Context and motivation for the change.
+* **Problem:** What specific issue are we trying to solve?
+* **Goal:** What is the definition of success (the "success state")?
+* **Non-goals:** What is explicitly out of scope?
+* **Constraints:** Mandatory technical or business constraints.
 
 ## Threshold Limits
 
-* **File Size:** ≤ 300 LOC (Lines of Code)
-* **Function Size:** ≤ 50 LOC
-* **Parameters:** ≤ 5 per function
-* **Complexity:** Cyclomatic Complexity ≤ 10
-
----
+* **File Length:** ≤ 300 LOC
+* **Function Length:** ≤ 50 LOC
+* **Parameters:** ≤ 5
+* **Cyclomatic Complexity:** ≤ 10
 
 ## Security Rules
 
-### NEVER:
-* Hardcode secrets in code.
-* Include sensitive data in logs.
-* Allow SQL Injection, XSS, or CSRF vulnerabilities.
-
-### ALWAYS:
-* Implement strict input validation.
-* Use parameterized queries.
-* Perform rigorous authentication/authorization checks
+* **NEVER:** Hardcode secrets in code/logs, leak sensitive data, or allow SQL Injection/XSS/CSRF vulnerabilities.
+* **ALWAYS:** Use input validation, parameterized queries, and authentication checks.
