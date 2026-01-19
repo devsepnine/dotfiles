@@ -26,3 +26,8 @@ marketplaces:
     source: https://github.com/kepano/obsidian-skills
     plugins:
       - obsidian        # Obsidian 노트 관리 (CEO Stephan Ango aka kepano 제작)
+
+  thedotmack:
+    source: https://github.com/thedotmack/claude-mem.git
+    plugins:
+      - claude-mem        # 대화 메모리 (컨텍스트 저장/검색)
