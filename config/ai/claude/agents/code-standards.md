@@ -1,5 +1,6 @@
 ---
-keywords: [코드 스타일, code style, 린트, lint, 포맷, format, 코딩, coding, 개발]
+name: Code Standards
+keywords: [코드 스타일, code style, 린트, lint, 포맷, format, 코딩, coding, 개발, standards, clean code, refactoring, testing]
 ---
 
 AGENTS.md

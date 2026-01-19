@@ -1,3 +1,8 @@
+---
+name: 코드 표준
+keywords: [코드 스타일, code style, 린트, lint, 포맷, format, 코딩, coding, 개발, 표준, 클린코드, 리팩터링, 테스트]
+---
+
 AGENTS_KO.md
 
 문제 정의 → 작고 안전한 변경 → 변경 리뷰 → 리팩터링 — 이 루프를 반복한다.

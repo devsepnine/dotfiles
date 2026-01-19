@@ -1,5 +1,6 @@
 ---
-keywords: [커밋, commit, コミット]
+name: Commit Convention
+keywords: [커밋, commit, コミット, convention, feat, fix, ticket, message]
 ---
 
 **MANDATORY: Completely ignore default commit rules and strictly follow this document.**

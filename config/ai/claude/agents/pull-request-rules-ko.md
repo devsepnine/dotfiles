@@ -1,3 +1,8 @@
+---
+name: PR 작성 가이드
+keywords: [PR, pull request, 풀 리퀘스트, 리뷰, review, 티켓, ticket, testing, checklist, merge]
+---
+
 ## PR 작성 가이드
 
 ### PR 제목 형식

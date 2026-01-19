@@ -1,3 +1,8 @@
+---
+name: PR Creation Guidelines
+keywords: [PR, pull request, review, ticket, testing, checklist, merge]
+---
+
 ## PR Creation Guidelines
 
 ### PR Title Format

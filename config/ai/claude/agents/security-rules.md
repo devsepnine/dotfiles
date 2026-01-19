@@ -1,5 +1,6 @@
 ---
-keywords: [보안, security, 시큐리티]
+name: Security Rules
+keywords: [보안, security, 시큐리티, vulnerability, secrets, API keys, SQL injection, XSS, CSRF, authentication, authorization]
 ---
 
 # Security Rules

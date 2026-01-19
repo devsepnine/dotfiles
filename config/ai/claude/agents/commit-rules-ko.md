@@ -1,5 +1,6 @@
 ---
-keywords: [커밋, commit, コミット]
+name: 커밋 컨벤션
+keywords: [커밋, commit, コミット, 컨벤션, convention, feat, fix, 티켓번호, ticket, message, 메시지]
 ---
 
 **필수 사항 : 기존 베이스 커밋 룰은 완전히 무시하고 착실히 문서를 따른다**

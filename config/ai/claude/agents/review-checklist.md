@@ -1,5 +1,6 @@
 ---
-keywords: [리뷰, review, 검토, 레뷰]
+name: Review Checklist
+keywords: [리뷰, review, 검토, 레뷰, checklist, code quality, security, testing, performance, documentation]
 ---
 
 # Review Checklist
