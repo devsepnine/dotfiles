@@ -18,19 +18,27 @@ pub fn scan_components(source_dir: &Path, dest_dir: &Path) -> Result<Vec<Compone
         &mut components,
     )?;
 
-    // Scan skills
-    scan_directory(
-        &source_dir.join("skills"),
-        &dest_dir.join("skills"),
-        ComponentType::Skills,
-        &mut components,
-    )?;
-
     // Scan commands
     scan_directory(
         &source_dir.join("commands"),
         &dest_dir.join("commands"),
         ComponentType::Commands,
+        &mut components,
+    )?;
+
+    // Scan rules
+    scan_directory(
+        &source_dir.join("rules"),
+        &dest_dir.join("rules"),
+        ComponentType::Rules,
+        &mut components,
+    )?;
+
+    // Scan skills
+    scan_directory(
+        &source_dir.join("skills"),
+        &dest_dir.join("skills"),
+        ComponentType::Skills,
         &mut components,
     )?;
 

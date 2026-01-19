@@ -13,6 +13,7 @@ use crate::tree::TreeView;
 pub enum Tab {
     Agents,
     Commands,
+    Rules,
     Skills,
     Hooks,
     OutputStyles,
@@ -27,6 +28,7 @@ impl Tab {
         &[
             Tab::Agents,
             Tab::Commands,
+            Tab::Rules,
             Tab::Skills,
             Tab::Hooks,
             Tab::OutputStyles,
@@ -41,13 +43,14 @@ impl Tab {
         match self {
             Tab::Agents => 0,
             Tab::Commands => 1,
-            Tab::Skills => 2,
-            Tab::Hooks => 3,
-            Tab::OutputStyles => 4,
-            Tab::Statusline => 5,
-            Tab::Config => 6,
-            Tab::McpServers => 7,
-            Tab::Plugins => 8,
+            Tab::Rules => 2,
+            Tab::Skills => 3,
+            Tab::Hooks => 4,
+            Tab::OutputStyles => 5,
+            Tab::Statusline => 6,
+            Tab::Config => 7,
+            Tab::McpServers => 8,
+            Tab::Plugins => 9,
         }
     }
 
@@ -59,6 +62,7 @@ impl Tab {
         match self {
             Tab::Agents => "Agents",
             Tab::Commands => "Commands",
+            Tab::Rules => "Rules",
             Tab::Skills => "Skills",
             Tab::Hooks => "Hooks",
             Tab::OutputStyles => "Styles",
@@ -73,6 +77,7 @@ impl Tab {
         match self {
             Tab::Agents => Some(ComponentType::Agents),
             Tab::Commands => Some(ComponentType::Commands),
+            Tab::Rules => Some(ComponentType::Rules),
             Tab::Skills => Some(ComponentType::Skills),
             Tab::Hooks => Some(ComponentType::Hooks),
             Tab::OutputStyles => Some(ComponentType::OutputStyles),
@@ -792,6 +797,7 @@ fn build_tree_views(components: &[Component]) -> HashMap<Tab, TreeView> {
     let component_tabs = [
         (Tab::Agents, ComponentType::Agents),
         (Tab::Commands, ComponentType::Commands),
+        (Tab::Rules, ComponentType::Rules),
         (Tab::Skills, ComponentType::Skills),
         (Tab::Hooks, ComponentType::Hooks),
         (Tab::OutputStyles, ComponentType::OutputStyles),
