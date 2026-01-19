@@ -34,6 +34,8 @@ keywords: [커밋, commit, コミット]
 
 ### Mandatory Rules
 
+**CRITICAL: Only create commits when explicitly requested by the user. Never automatically commit after completing work unless the user specifically asks for it.**
+
 **Pre-commit Checklist:**
 - Keep work, commits, and PRs small.
 - Read entire files thoroughly and understand impact.
