@@ -309,11 +309,13 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
     let binary_name = component.dest_path.file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| {
-            // On Windows, add .exe extension
+            // Select OS-specific binary name
             if cfg!(windows) {
                 format!("{}.exe", config.name)
+            } else if cfg!(target_os = "macos") {
+                format!("{}-macos", config.name)
             } else {
-                config.name.clone()
+                format!("{}-linux", config.name)
             }
         });
     let hook_command = format!("~/.claude/hooks/{}", binary_name);

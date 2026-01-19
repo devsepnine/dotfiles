@@ -42,13 +42,8 @@ pub fn scan_components(source_dir: &Path, dest_dir: &Path) -> Result<Vec<Compone
         &mut components,
     )?;
 
-    // Scan statusline
-    scan_directory(
-        &source_dir.join("statusline"),
-        &dest_dir.join("statusline"),
-        ComponentType::Statusline,
-        &mut components,
-    )?;
+    // Scan statusline (OS-specific binary)
+    scan_statusline(source_dir, dest_dir, &mut components)?;
 
     // Scan hooks (special handling for Rust projects)
     scan_hooks(source_dir, dest_dir, &mut components)?;
@@ -97,6 +92,40 @@ fn scan_directory(
     Ok(())
 }
 
+fn scan_statusline(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component>) -> Result<()> {
+    let statusline_dir = source_dir.join("statusline");
+    if !statusline_dir.exists() {
+        return Ok(());
+    }
+
+    // Select OS-specific binary
+    let binary_name = if cfg!(windows) {
+        "statusline.exe"
+    } else if cfg!(target_os = "macos") {
+        "statusline-macos"
+    } else {
+        "statusline-linux"
+    };
+
+    let binary_path = statusline_dir.join(binary_name);
+    if !binary_path.exists() {
+        return Ok(());
+    }
+
+    let dest_path = dest_dir.join("statusline").join(binary_name);
+    let status = determine_status(&binary_path, &dest_path)?;
+
+    components.push(Component::new(
+        ComponentType::Statusline,
+        binary_name.to_string(),
+        binary_path,
+        dest_path,
+        status,
+    ));
+
+    Ok(())
+}
+
 fn scan_hooks(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component>) -> Result<()> {
     let hooks_dir = source_dir.join("hooks");
     if !hooks_dir.exists() {
@@ -126,11 +155,13 @@ fn scan_hooks(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
-        // On Windows, look for .exe extension
+        // Select OS-specific binary
         let binary_name = if cfg!(windows) {
             format!("{}.exe", config.name)
+        } else if cfg!(target_os = "macos") {
+            format!("{}-macos", config.name)
         } else {
-            config.name.clone()
+            format!("{}-linux", config.name)
         };
 
         let binary_path = path.join(&binary_name);
