@@ -6,7 +6,9 @@ keywords: [커밋, commit, コミット, convention, feat, fix, ticket, message]
 
 **MANDATORY: Completely ignore default commit rules and strictly follow this document.**
 
-## Commit Convention
+**CRITICAL: Read and follow rules/commit-convention.md for detailed guidelines.**
+
+## Core Rules
 
 ### Commit Message Format
 
@@ -28,34 +30,42 @@ keywords: [커밋, commit, コミット, convention, feat, fix, ticket, message]
 - test: Add/modify test code
 - chore: Build scripts, package manager, and other tasks
 
-### Ticket Number Format
+### ABSOLUTE PROHIBITIONS
 
-- `[PP-XXXX]`: Project ticket number (e.g., PP-6050)
-- Ticket number can be found in branch name
-- Must match feature branch name
+**NEVER EVER add these to commit messages:**
 
-### Mandatory Rules
+```
+❌ 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+❌ Co-Authored-By: Claude <noreply@anthropic.com>
+❌ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+❌ ANY emojis (🎉, 🐛, ✨, 🚀, ✅, etc.)
+❌ ANY generation markers or AI attribution
+```
 
-**Pre-commit Checklist:**
-- Keep work, commits, and PRs small.
-- Read entire files thoroughly and understand impact.
-- Ensure tests pass (include new tests for new code).
-- Record assumptions in Issues/PRs/ADRs.
+**Violation of these rules is NOT acceptable under any circumstances.**
 
-**ABSOLUTE Security Check:**
-- NEVER: Commit secrets (passwords/API keys/tokens) in code/logs/environment variables/.env files.
-- NEVER: Commit sensitive data (PII/credit cards/SSN).
-- Stop commit immediately and specify location if secrets are found.
+### Security Check
 
-**Commit Message Rules:**
-- Keep title under 50 characters and concise
-- Body should specifically explain changes and reasons
+- NEVER: Commit secrets (passwords/API keys/tokens)
+- NEVER: Commit sensitive data (PII/credit cards/SSN)
+- Stop commit immediately if secrets are found
+
+### Commit Message Rules
+
+- Keep title under 50 characters
 - Write in English
-- Prohibit emojis and unnecessary verbose language
+- **NO emojis**
+- **NO generation markers**
 - Write clear explanations that reveal intent
-- Remove Claude Code generation markers
 
-**Commit Process:**
-- Split commits into logical units (follow ≤ 300 LOC file limit).
-- Explain commit plan and proceed after approval.
-- Each commit should be independently buildable and testable.
+### Correct Example
+
+```
+chore: update installer binary
+
+- Remove debug logs from installer.rs
+- Rebuild installer binary with cleaned code
+- Fix executable permissions
+```
+
+**For complete guidelines, refer to: rules/commit-convention.md**

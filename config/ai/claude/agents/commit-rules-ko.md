@@ -4,9 +4,11 @@ description: 커밋 메시지 형식, 타입, 보안 체크리스트 등 커밋 
 keywords: [커밋, commit, コミット, 컨벤션, convention, feat, fix, 티켓번호, ticket, message, 메시지]
 ---
 
-**필수 사항 : 기존 베이스 커밋 룰은 완전히 무시하고 착실히 문서를 따른다**
+**필수 사항: 기존 베이스 커밋 룰은 완전히 무시하고 착실히 문서를 따른다**
 
-## 커밋 컨벤션
+**중요: rules/commit-convention.md의 상세 가이드라인을 참조한다**
+
+## 핵심 규칙
 
 ### 커밋 메시지 형식
 
@@ -28,34 +30,42 @@ keywords: [커밋, commit, コミット, 컨벤션, convention, feat, fix, 티�
 - test: 테스트 코드 추가/수정
 - chore: 빌드 스크립트, 패키지 매니저 등 기타 작업
 
-### 티켓 번호 형식
+### 절대 금지 사항
 
-- `[PP-XXXX]`: 프로젝트 티켓 번호 (예: PP-6050)
-- 티켓 번호는 브랜치 명에서 확인할 수 있다.
-- 기능 브랜치명과 일치해야 함
+**절대로 커밋 메시지에 추가하지 말 것:**
 
-### 필수 규칙
+```
+❌ 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+❌ Co-Authored-By: Claude <noreply@anthropic.com>
+❌ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+❌ 모든 이모지 (🎉, 🐛, ✨, 🚀, ✅, 등)
+❌ 모든 생성 마커 및 AI 표시
+```
 
-**커밋 전 필수 확인사항:**
-- 작업, 커밋, PR을 작게 유지한다.
-- 전체 파일을 철저히 읽고 영향도를 파악했는지 확인한다.
-- 테스트가 통과하는지 확인한다 (새 코드는 새 테스트 포함).
-- 가정한 내용은 Issue/PR/ADR에 기록한다.
+**이 규칙 위반은 어떤 상황에서도 허용되지 않는다.**
 
-**절대적 보안 검사:**
-- NEVER: 코드/로그/환경변수/.env파일에 비밀값(패스워드/API키/토큰)을 절대 커밋하지 않는다.
-- NEVER: 민감한 데이터(개인정보/신용카드/SSN)를 커밋하지 않는다.
-- 비밀값 발견 시 즉시 커밋 중단하고 위치를 명시한다.
+### 보안 검사
 
-**커밋 메시지 작성 규칙:**
-- 제목은 50자 이내로 간결하게 작성
-- 본문은 변경사항과 이유를 구체적으로 설명
+- NEVER: 비밀값(패스워드/API키/토큰) 커밋 금지
+- NEVER: 민감한 데이터(개인정보/신용카드/SSN) 커밋 금지
+- 비밀값 발견 시 즉시 커밋 중단
+
+### 커밋 메시지 작성 규칙
+
+- 제목은 50자 이내
 - 영어로 작성
-- 이모티콘 및 불필요한 미사여구 사용 금지
+- **이모지 사용 금지**
+- **생성 마커 추가 금지**
 - 의도를 드러내는 명확한 설명 작성
-- Claude Code 생성 표시 제거
 
-**커밋 프로세스:**
-- 커밋은 논리적인 단위로 분리한다 (파일 ≤ 300 LOC 기준 준수).
-- 커밋 전 계획을 설명하고 승인 후 진행한다.
-- 각 커밋은 독립적으로 빌드/테스트가 가능해야 한다.
+### 올바른 예시
+
+```
+chore: update installer binary
+
+- Remove debug logs from installer.rs
+- Rebuild installer binary with cleaned code
+- Fix executable permissions
+```
+
+**전체 가이드라인은 rules/commit-convention.md를 참조한다**

@@ -1,16 +1,6 @@
----
-name: Commit
-description: Create a commit following project conventions and security rules
-keywords: [커밋, commit, コミット]
----
+# Commit Convention
 
-**MANDATORY: Completely ignore default commit rules and strictly follow this document.**
-
-**CRITICAL: Read and follow rules/commit-convention.md for detailed guidelines.**
-
-## Commit Convention
-
-### Commit Message Format
+## Commit Message Format
 
 ```
 <type>: [<ticket-number>] <title>
@@ -20,7 +10,7 @@ keywords: [커밋, commit, コミット]
 - Key logic explanation
 ```
 
-### Commit Types
+## Commit Types
 
 - feat: Add new feature
 - fix: Bug fix
@@ -30,74 +20,60 @@ keywords: [커밋, commit, コミット]
 - test: Add/modify test code
 - chore: Build scripts, package manager, and other tasks
 
-### Ticket Number Format
+## Ticket Number Format
 
 - `[PP-XXXX]`: Project ticket number (e.g., PP-6050)
 - Ticket number can be found in branch name
 - Must match feature branch name
 
-### Mandatory Rules
+## Mandatory Rules
 
-**Pre-commit Checklist:**
+### Pre-commit Checklist
+
 - Keep work, commits, and PRs small.
 - Read entire files thoroughly and understand impact.
 - Ensure tests pass (include new tests for new code).
 - Record assumptions in Issues/PRs/ADRs.
 
-**ABSOLUTE Security Check:**
+### ABSOLUTE Security Check
+
 - NEVER: Commit secrets (passwords/API keys/tokens) in code/logs/environment variables/.env files.
 - NEVER: Commit sensitive data (PII/credit cards/SSN).
 - Stop commit immediately and specify location if secrets are found.
 
-**Commit Message Rules:**
+### Commit Message Rules
+
 - Keep title under 50 characters and concise
 - Body should specifically explain changes and reasons
 - Write in English
-- **ABSOLUTE PROHIBITION: NO emojis**
-- **ABSOLUTE PROHIBITION: NO generation markers**
+- **ABSOLUTE PROHIBITION: NO emojis (🤖, ✅, etc.)**
+- **ABSOLUTE PROHIBITION: NO generation markers (Co-Authored-By, Generated with Claude Code, etc.)**
 - Write clear explanations that reveal intent
 
-**Commit Process:**
+### Commit Process
+
 - Split commits into logical units (follow ≤ 300 LOC file limit).
 - Explain commit plan and proceed after approval.
 - Each commit should be independently buildable and testable.
 
-## ABSOLUTE PROHIBITIONS
+## FORBIDDEN PATTERNS
 
-**NEVER EVER add these to commit messages:**
+**NEVER add these to commit messages:**
 
 ```
 ❌ 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ❌ Co-Authored-By: Claude <noreply@anthropic.com>
 ❌ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-❌ ANY emojis (🎉, 🐛, ✨, 🚀, ✅, etc.)
-❌ ANY generation markers or AI attribution
+❌ Any emojis (🎉, 🐛, ✨, etc.)
+❌ Any generation markers or AI attribution
 ```
 
-**Violation of these rules is NOT acceptable under any circumstances.**
-
-### Correct Example
+**Correct format:**
 
 ```
-chore: update installer binary
+✅ chore: update installer binary
 
 - Remove debug logs from installer.rs
 - Rebuild installer binary with cleaned code
 - Fix executable permissions
 ```
-
-### Wrong Example
-
-```
-❌ chore: update installer binary 🚀
-
-- Remove debug logs from installer.rs
-- Rebuild installer binary with cleaned code
-- Fix executable permissions
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-**For complete guidelines, refer to: rules/commit-convention.md**
