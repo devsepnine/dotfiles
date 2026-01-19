@@ -74,6 +74,13 @@ fn scan_directory(
             continue;
         }
 
+        // Skip files ending with -ko.md
+        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+            if file_name.ends_with("-ko.md") {
+                continue;
+            }
+        }
+
         let relative = path.strip_prefix(source_dir)?;
         let dest_path = dest_dir.join(relative);
         let name = relative.to_string_lossy().to_string();
@@ -191,7 +198,7 @@ fn add_config_files(
     dest_dir: &Path,
     components: &mut Vec<Component>,
 ) -> Result<()> {
-    let config_files = ["CLAUDE.md", "CLAUDE-KO.md", "settings.json"];
+    let config_files = ["CLAUDE.md", "settings.json"];
 
     for file in config_files {
         let source_path = source_dir.join(file);
