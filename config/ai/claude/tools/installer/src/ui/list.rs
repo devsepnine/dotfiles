@@ -115,7 +115,18 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
                 _ => false,
             };
 
-            let default_marker = if is_default { " *" } else { "" };
+            let default_marker = match app.tab {
+                Tab::OutputStyles | Tab::Statusline => {
+                    if is_default {
+                        " (current)"
+                    } else if c.status == InstallStatus::New {
+                        " (not installed)"
+                    } else {
+                        " (available)"
+                    }
+                }
+                _ => "",
+            };
 
             // Extract just the filename (last part of path)
             let filename = c.name.rsplit('/').next().unwrap_or(&c.name);
@@ -163,7 +174,18 @@ fn render_flat(f: &mut Frame, app: &App, area: Rect) {
                 _ => false,
             };
 
-            let default_marker = if is_default { " *" } else { "" };
+            let default_marker = match app.tab {
+                Tab::OutputStyles | Tab::Statusline => {
+                    if is_default {
+                        " (current)"
+                    } else if c.status == InstallStatus::New {
+                        " (not installed)"
+                    } else {
+                        " (available)"
+                    }
+                }
+                _ => "",
+            };
 
             let line = Line::from(vec![
                 Span::raw(format!("{} ", checkbox)),
