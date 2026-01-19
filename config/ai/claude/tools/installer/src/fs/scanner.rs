@@ -198,7 +198,7 @@ fn add_config_files(
     dest_dir: &Path,
     components: &mut Vec<Component>,
 ) -> Result<()> {
-    let config_files = ["CLAUDE.md", "settings.json"];
+    let config_files = ["settings.json"];
 
     for file in config_files {
         let source_path = source_dir.join(file);
