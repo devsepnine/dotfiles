@@ -211,7 +211,14 @@ pub fn set_statusline(dest_dir: &Path, script_name: &str) -> Result<()> {
     };
 
     // Set statusLine configuration object
-    let statusline_path = format!("~/.claude/statusline/{}", script_name);
+    // Windows doesn't support ~ expansion, use absolute path
+    let statusline_path = if cfg!(windows) {
+        dest_dir.join("statusline").join(script_name)
+            .to_string_lossy()
+            .to_string()
+    } else {
+        format!("~/.claude/statusline/{}", script_name)
+    };
     settings["statusLine"] = serde_json::json!({
         "type": "command",
         "command": statusline_path,
@@ -305,7 +312,6 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
     let settings_path = dest_dir.join("settings.json");
 
     // Determine hook command path
-    // Use forward slash and tilde for cross-platform compatibility in settings.json
     let binary_name = component.dest_path.file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| {
@@ -318,7 +324,14 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
                 format!("{}-linux", config.name)
             }
         });
-    let hook_command = format!("~/.claude/hooks/{}", binary_name);
+    // Windows doesn't support ~ expansion, use absolute path
+    let hook_command = if cfg!(windows) {
+        dest_dir.join("hooks").join(&binary_name)
+            .to_string_lossy()
+            .to_string()
+    } else {
+        format!("~/.claude/hooks/{}", binary_name)
+    };
 
     // Read or create settings
     let mut settings: Value = if settings_path.exists() {
