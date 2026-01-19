@@ -1,5 +1,6 @@
 ---
 name: 커밋 컨벤션
+description: 커밋 메시지 형식, 타입, 보안 체크리스트 등 커밋 규칙
 keywords: [커밋, commit, コミット, 컨벤션, convention, feat, fix, 티켓번호, ticket, message, 메시지]
 ---
 

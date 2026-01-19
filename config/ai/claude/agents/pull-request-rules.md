@@ -1,5 +1,6 @@
 ---
 name: PR Creation Guidelines
+description: PR title format, description template, and checklist rules
 keywords: [PR, pull request, review, ticket, testing, checklist, merge]
 ---
 

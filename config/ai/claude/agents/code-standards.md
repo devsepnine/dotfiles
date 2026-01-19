@@ -1,5 +1,6 @@
 ---
 name: Code Standards
+description: Code style, clean code, refactoring, and coding standards guidelines
 keywords: [코드 스타일, code style, 린트, lint, 포맷, format, 코딩, coding, 개발, standards, clean code, refactoring, testing]
 ---
 

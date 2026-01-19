@@ -1,5 +1,6 @@
 ---
 name: Security Rules
+description: Secrets management, vulnerability prevention, authentication and authorization rules
 keywords: [보안, security, 시큐리티, vulnerability, secrets, API keys, SQL injection, XSS, CSRF, authentication, authorization]
 ---
 

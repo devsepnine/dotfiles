@@ -1,5 +1,6 @@
 ---
 name: Review Checklist
+description: Code review checklist for quality, security, testing, and performance
 keywords: [리뷰, review, 검토, 레뷰, checklist, code quality, security, testing, performance, documentation]
 ---
 

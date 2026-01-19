@@ -1,5 +1,6 @@
 ---
 name: PR 작성 가이드
+description: PR 제목 형식, 설명 템플릿, 체크리스트 등 PR 작성 규칙
 keywords: [PR, pull request, 풀 리퀘스트, 리뷰, review, 티켓, ticket, testing, checklist, merge]
 ---
 

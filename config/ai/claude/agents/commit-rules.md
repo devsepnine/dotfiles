@@ -1,5 +1,6 @@
 ---
 name: Commit Convention
+description: Commit message format, types, and security checklist rules
 keywords: [커밋, commit, コミット, convention, feat, fix, ticket, message]
 ---
 

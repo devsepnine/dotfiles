@@ -1,5 +1,6 @@
 ---
 name: 코드 표준
+description: 코드 스타일, 클린 코드, 리팩터링 등 코딩 표준 가이드라인
 keywords: [코드 스타일, code style, 린트, lint, 포맷, format, 코딩, coding, 개발, 표준, 클린코드, 리팩터링, 테스트]
 ---
 

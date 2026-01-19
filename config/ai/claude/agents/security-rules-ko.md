@@ -1,5 +1,6 @@
 ---
 name: 보안 규칙
+description: 비밀정보 관리, 취약점 방지, 인증/인가 등 보안 필수 규칙
 keywords: [보안, security, 시큐리티, 취약점, 비밀정보, API 키, SQL 인젝션, XSS, CSRF, 인증, 인가]
 ---
 
