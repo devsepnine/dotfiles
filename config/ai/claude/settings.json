@@ -5,6 +5,5 @@
     "ENABLE_TOOL_SEARCH": true,
     "FORCE_AUTOUPDATE_PLUGINS": false,
     "CLAUDE_MEM_DISABLE_MD_FILES": true
-  },
-  "language": "ko"
+  }
 }
