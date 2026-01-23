@@ -131,15 +131,25 @@ pub fn parse_plugins_yaml(content: &str) -> PluginCatalog {
 }
 
 fn parse_plugin_entry(entry: &serde_yaml::Value) -> (String, Option<String>) {
+    use serde_yaml::Value;
+
+    // 객체 형식: { name: "...", description: "..." }
+    if let Some(obj) = entry.as_mapping() {
+        let name = obj.get(&Value::String("name".to_string()))
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+
+        let description = obj.get(&Value::String("description".to_string()))
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+
+        return (name, description);
+    }
+
+    // 문자열 형식 (하위 호환성): "plugin-name"
     if let Some(s) = entry.as_str() {
-        // "plugin-name # comment" 형식 파싱
-        if let Some(idx) = s.find('#') {
-            let name = s[..idx].trim().to_string();
-            let comment = s[idx + 1..].trim().to_string();
-            (name, Some(comment))
-        } else {
-            (s.trim().to_string(), None)
-        }
+        (s.trim().to_string(), None)
     } else {
         (String::new(), None)
     }
@@ -166,12 +176,15 @@ marketplaces:
   claude-plugins-official:
     source: https://github.com/anthropics/claude-plugins-official.git
     plugins:
-      - rust-analyzer-lsp # Rust 언어 서버
-      - typescript-lsp    # TypeScript 언어 서버
+      - name: rust-analyzer-lsp
+        description: Rust 언어 서버 (코드 분석, 자동완성)
+      - name: typescript-lsp
+        description: TypeScript/JavaScript 언어 서버
   anthropic-agent-skills:
     source: https://github.com/anthropics/skills.git
     plugins:
-      - document-skills   # 문서 생성/편집
+      - name: document-skills
+        description: 문서 생성/편집
 "#;
 
         let catalog = parse_plugins_yaml(yaml);
@@ -182,19 +195,22 @@ marketplaces:
         let rust_entry = catalog.iter().find(|(_, _, name, _)| name == "rust-analyzer-lsp").unwrap();
         assert_eq!(rust_entry.0, "claude-plugins-official");
         assert_eq!(rust_entry.1, "https://github.com/anthropics/claude-plugins-official.git");
-        // YAML parser strips comments, so we won't have them in parsed data
-        // assert_eq!(rust_entry.3, Some("Rust 언어 서버".to_string()));
+        assert_eq!(rust_entry.3, Some("Rust 언어 서버 (코드 분석, 자동완성)".to_string()));
+
+        let ts_entry = catalog.iter().find(|(_, _, name, _)| name == "typescript-lsp").unwrap();
+        assert_eq!(ts_entry.3, Some("TypeScript/JavaScript 언어 서버".to_string()));
 
         let doc_entry = catalog.iter().find(|(_, _, name, _)| name == "document-skills").unwrap();
         assert_eq!(doc_entry.0, "anthropic-agent-skills");
+        assert_eq!(doc_entry.3, Some("문서 생성/편집".to_string()));
     }
 
     #[test]
     fn test_parse_plugins_yaml_old_format() {
         let yaml = r#"
 https://github.com/anthropics/claude-plugins-official.git:
-  - rust-analyzer-lsp # Rust 언어 서버
-  - typescript-lsp    # TypeScript 언어 서버
+  - rust-analyzer-lsp
+  - typescript-lsp
 "#;
 
         let catalog = parse_plugins_yaml(yaml);
@@ -202,6 +218,30 @@ https://github.com/anthropics/claude-plugins-official.git:
 
         let rust_entry = catalog.iter().find(|(_, _, name, _)| name == "rust-analyzer-lsp").unwrap();
         assert_eq!(rust_entry.0, "claude-plugins-official"); // extracted from URL
+        assert_eq!(rust_entry.3, None); // No description in old format
+    }
+
+    #[test]
+    fn test_parse_plugins_yaml_mixed_format() {
+        // 새 형식 내에서 객체와 문자열 혼용 (하위 호환성)
+        let yaml = r#"
+marketplaces:
+  claude-plugins-official:
+    source: https://github.com/anthropics/claude-plugins-official.git
+    plugins:
+      - name: rust-analyzer-lsp
+        description: Rust 언어 서버
+      - typescript-lsp
+"#;
+
+        let catalog = parse_plugins_yaml(yaml);
+        assert_eq!(catalog.len(), 2);
+
+        let rust_entry = catalog.iter().find(|(_, _, name, _)| name == "rust-analyzer-lsp").unwrap();
+        assert_eq!(rust_entry.3, Some("Rust 언어 서버".to_string()));
+
+        let ts_entry = catalog.iter().find(|(_, _, name, _)| name == "typescript-lsp").unwrap();
+        assert_eq!(ts_entry.3, None); // No description for string format
     }
 
     #[test]
