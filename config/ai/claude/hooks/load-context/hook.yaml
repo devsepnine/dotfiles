@@ -1,4 +1,4 @@
 name: load-context
 event: SessionStart
-type: filter
+type: command
 timeout: 5000

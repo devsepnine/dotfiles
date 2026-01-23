@@ -1,4 +1,4 @@
 name: persist-session
 event: SessionEnd
-type: filter
+type: command
 timeout: 5000
