@@ -38,14 +38,52 @@ fn get_log_file() -> PathBuf {
         .join("inject-guide.log")
 }
 
+fn rotate_log_if_needed(log_path: &PathBuf) {
+    const MAX_LOG_SIZE: u64 = 10 * 1024 * 1024; // 10MB
+    const MAX_BACKUPS: u8 = 5;
+
+    // Check if log file exists and its size
+    if let Ok(metadata) = fs::metadata(log_path) {
+        if metadata.len() > MAX_LOG_SIZE {
+            // Rotate existing backups: .4 -> .5, .3 -> .4, etc.
+            for i in (1..MAX_BACKUPS).rev() {
+                let old_backup = log_path.with_extension(format!("log.{}", i));
+                let new_backup = log_path.with_extension(format!("log.{}", i + 1));
+
+                if old_backup.exists() {
+                    let _ = fs::rename(&old_backup, &new_backup);
+                }
+            }
+
+            // Move current log to .1
+            let backup = log_path.with_extension("log.1");
+            let _ = fs::rename(log_path, &backup);
+
+            // Log rotation info to new file
+            let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+            let rotation_msg = format!(
+                "[{}] Log rotated (previous file exceeded {}MB)\n",
+                timestamp,
+                MAX_LOG_SIZE / 1024 / 1024
+            );
+            let _ = fs::write(log_path, rotation_msg);
+        }
+    }
+}
+
 fn log(message: &str) {
+    let log_path = get_log_file();
+
+    // Check and rotate log if needed
+    rotate_log_if_needed(&log_path);
+
     let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
     let log_line = format!("[{}] {}\n", timestamp, message);
 
     if let Ok(mut file) = OpenOptions::new()
         .create(true)
         .append(true)
-        .open(get_log_file())
+        .open(&log_path)
     {
         let _ = file.write_all(log_line.as_bytes());
     }
