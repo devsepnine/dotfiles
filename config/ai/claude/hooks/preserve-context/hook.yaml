@@ -1,0 +1,4 @@
+name: preserve-context
+event: PreCompact
+type: filter
+timeout: 5000

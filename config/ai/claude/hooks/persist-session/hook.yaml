@@ -1,0 +1,4 @@
+name: persist-session
+event: SessionEnd
+type: filter
+timeout: 5000
