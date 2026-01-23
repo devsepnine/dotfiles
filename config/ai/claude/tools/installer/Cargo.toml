@@ -1,16 +1,16 @@
 [package]
-name = "claude-installer"
+name = "installer"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 # TUI
-ratatui = "0.29"
-crossterm = "0.28"
+ratatui = "0.30"
+crossterm = "0.29"
 
 # Filesystem
 walkdir = "2.5"
-dirs = "5.0"
+dirs = "6.0"
 
 # Diff
 similar = { version = "2.6", features = ["text"] }

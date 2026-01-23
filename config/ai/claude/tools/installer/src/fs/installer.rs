@@ -319,9 +319,9 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
             if cfg!(windows) {
                 format!("{}.exe", config.name)
             } else if cfg!(target_os = "macos") {
-                format!("{}-macos", config.name)
+                format!("{}_macos", config.name)
             } else {
-                format!("{}-linux", config.name)
+                format!("{}_linux", config.name)
             }
         });
     // Windows doesn't support ~ expansion, use absolute path

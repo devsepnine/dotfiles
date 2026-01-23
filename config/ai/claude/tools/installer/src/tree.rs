@@ -11,10 +11,12 @@ pub enum TreeNode {
         expanded: bool,
         children: Vec<usize>, // Indices into TreeView.nodes
         depth: usize,
+        parent_idx: Option<usize>, // Index of parent folder
     },
     File {
         component_idx: usize, // Index into App.components
         depth: usize,
+        parent_idx: Option<usize>, // Index of parent folder
     },
 }
 
@@ -98,9 +100,17 @@ impl TreeView {
 
         if parts.len() == 1 {
             // This is a file
+            let parent_idx = if depth == 0 {
+                None
+            } else {
+                let parent_path = current_path.join("/");
+                folder_map.get(&parent_path).copied()
+            };
+
             let file_node = TreeNode::File {
                 component_idx: comp_idx,
                 depth,
+                parent_idx,
             };
             let node_idx = self.nodes.len();
             self.nodes.push(file_node);
@@ -109,8 +119,7 @@ impl TreeView {
                 self.root_children.push(node_idx);
             } else {
                 // Add to parent folder
-                let parent_path = current_path.join("/");
-                if let Some(&parent_idx) = folder_map.get(&parent_path) {
+                if let Some(parent_idx) = parent_idx {
                     if let TreeNode::Folder { children, .. } = &mut self.nodes[parent_idx] {
                         children.push(node_idx);
                     }
@@ -125,6 +134,14 @@ impl TreeView {
             let _folder_idx = if let Some(&idx) = folder_map.get(&folder_path) {
                 idx
             } else {
+                // Get parent index
+                let parent_idx = if depth == 0 {
+                    None
+                } else {
+                    let parent_path = current_path[..current_path.len() - 1].join("/");
+                    folder_map.get(&parent_path).copied()
+                };
+
                 // Create new folder
                 let folder_node = TreeNode::Folder {
                     name: folder_name.to_string(),
@@ -132,6 +149,7 @@ impl TreeView {
                     expanded: true, // Default expanded
                     children: Vec::new(),
                     depth,
+                    parent_idx,
                 };
                 let idx = self.nodes.len();
                 self.nodes.push(folder_node);
@@ -141,8 +159,7 @@ impl TreeView {
                 if depth == 0 {
                     self.root_children.push(idx);
                 } else {
-                    let parent_path = current_path[..current_path.len() - 1].join("/");
-                    if let Some(&parent_idx) = folder_map.get(&parent_path) {
+                    if let Some(parent_idx) = parent_idx {
                         if let TreeNode::Folder { children, .. } = &mut self.nodes[parent_idx] {
                             children.push(idx);
                         }
@@ -213,6 +230,11 @@ impl TreeView {
         self.current_node().map(|n| n.is_folder()).unwrap_or(false)
     }
 
+    /// Check if current folder is expanded
+    pub fn is_current_folder_expanded(&self) -> bool {
+        self.current_node().map(|n| n.is_expanded()).unwrap_or(false)
+    }
+
     /// Get component index if cursor is on a file
     pub fn current_component_idx(&self) -> Option<usize> {
         match self.current_node() {
@@ -250,6 +272,31 @@ impl TreeView {
                 if *expanded {
                     *expanded = false;
                     self.rebuild_visible();
+                }
+            }
+        }
+    }
+
+    /// Collapse parent folder (when cursor is on a file or folder)
+    pub fn collapse_parent(&mut self) {
+        if let Some(current_idx) = self.current_node_idx() {
+            // Get parent index directly from the node
+            let parent_idx = match &self.nodes[current_idx] {
+                TreeNode::Folder { parent_idx, .. } => *parent_idx,
+                TreeNode::File { parent_idx, .. } => *parent_idx,
+            };
+
+            // If parent exists, collapse it
+            if let Some(parent_idx) = parent_idx {
+                if let TreeNode::Folder { expanded, .. } = &mut self.nodes[parent_idx] {
+                    if *expanded {
+                        *expanded = false;
+                        self.rebuild_visible();
+                        // Move cursor to the collapsed parent folder
+                        if let Some(new_pos) = self.visible_indices.iter().position(|&idx| idx == parent_idx) {
+                            self.cursor = new_pos;
+                        }
+                    }
                 }
             }
         }

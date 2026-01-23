@@ -121,7 +121,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
+fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()>
+where
+    <B as ratatui::backend::Backend>::Error: Send + Sync + 'static,
+{
     use std::sync::mpsc::{self, TryRecvError};
     use std::thread;
 
@@ -295,35 +298,35 @@ fn handle_list_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) -> Re
             }
         }
         KeyCode::BackTab => app.prev_tab(), // Some terminals send BackTab for Shift+Tab
-        // Arrow keys: context-sensitive for tree view
-        KeyCode::Left | KeyCode::Char('h') => {
-            if app.is_cursor_on_folder() {
-                // On folder: collapse it
+        // h/l keys and Left/Right arrow keys: folder navigation
+        KeyCode::Char('h') | KeyCode::Left => {
+            if app.is_cursor_on_folder() && app.is_current_folder_expanded() {
+                // On expanded folder: collapse it
                 app.collapse_folder();
             } else {
-                // On file or MCP/Plugins: prev tab
-                app.prev_tab();
+                // On collapsed folder or file: collapse parent folder
+                app.collapse_parent_folder();
             }
         }
-        KeyCode::Right | KeyCode::Char('l') => {
+        KeyCode::Char('l') | KeyCode::Right => {
             if app.is_cursor_on_folder() {
                 // On folder: expand it
                 app.expand_folder();
-            } else {
-                // On file or MCP/Plugins: next tab
-                app.next_tab();
             }
+            // On file: do nothing
         }
-        // Number keys 1-9 for direct tab selection
-        KeyCode::Char('1') => app.set_tab(0),
-        KeyCode::Char('2') => app.set_tab(1),
-        KeyCode::Char('3') => app.set_tab(2),
-        KeyCode::Char('4') => app.set_tab(3),
-        KeyCode::Char('5') => app.set_tab(4),
-        KeyCode::Char('6') => app.set_tab(5),
-        KeyCode::Char('7') => app.set_tab(6),
-        KeyCode::Char('8') => app.set_tab(7),
-        KeyCode::Char('9') => app.set_tab(8),
+        // Number keys 1-0 for direct tab selection
+        KeyCode::Char('1') => app.set_tab(0),  // Agents
+        KeyCode::Char('2') => app.set_tab(1),  // Commands
+        KeyCode::Char('3') => app.set_tab(2),  // Contexts
+        KeyCode::Char('4') => app.set_tab(3),  // Rules
+        KeyCode::Char('5') => app.set_tab(4),  // Skills
+        KeyCode::Char('6') => app.set_tab(5),  // Hooks
+        KeyCode::Char('7') => app.set_tab(6),  // OutputStyles
+        KeyCode::Char('8') => app.set_tab(7),  // Statusline
+        KeyCode::Char('9') => app.set_tab(8),  // Config
+        KeyCode::Char('0') => app.set_tab(9),  // MCP
+        KeyCode::Char('-') => app.set_tab(10), // Plugins
         // List navigation
         KeyCode::Down | KeyCode::Char('j') => app.next_item(),
         KeyCode::Up | KeyCode::Char('k') => app.prev_item(),

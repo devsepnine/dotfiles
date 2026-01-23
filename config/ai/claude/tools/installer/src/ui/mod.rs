@@ -74,16 +74,16 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
     let help_text = match app.current_view {
         View::List => {
             if app.tab == Tab::McpServers {
-                "[Space] Toggle  [i] Install  [r] Remove  [o] Scope  [1-9] Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [o] Scope  [Tab/1-0,-] Switch Tab  [q] Quit"
             } else if app.tab == Tab::Plugins {
-                "[Space] Toggle  [i] Install  [r] Remove  [1-9] Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [Tab/1-0,-] Switch Tab  [q] Quit"
             } else if app.tab == Tab::OutputStyles || app.tab == Tab::Statusline {
-                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [s] Set Default  [1-9] Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [s] Set Default  [Tab/1-0,-] Switch Tab  [q] Quit"
             } else {
-                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [1-9] Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [h/l/←/→] Folder Nav  [Tab/1-0,-] Switch Tab  [q] Quit"
             }
         }
-        View::Diff => "[j/k] Scroll  [q/Esc] Close",
+        View::Diff => "[j/k/↑/↓] Scroll  [q/Esc] Close",
         View::EnvInput => "[Enter] Submit  [Esc] Cancel  [Backspace] Delete",
         View::ProjectPath => "[Enter] Confirm  [Esc] Cancel  [Backspace] Delete",
         View::Installing => {

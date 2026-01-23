@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub enum ComponentType {
     Agents,
     Commands,
+    Contexts,
     Rules,
     Skills,
     Hooks,
@@ -18,6 +19,7 @@ impl ComponentType {
         match self {
             Self::Agents => "agents",
             Self::Commands => "commands",
+            Self::Contexts => "contexts",
             Self::Rules => "rules",
             Self::Skills => "skills",
             Self::Hooks => "hooks",

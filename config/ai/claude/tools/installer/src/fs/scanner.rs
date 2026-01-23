@@ -26,6 +26,14 @@ pub fn scan_components(source_dir: &Path, dest_dir: &Path) -> Result<Vec<Compone
         &mut components,
     )?;
 
+    // Scan contexts
+    scan_directory(
+        &source_dir.join("contexts"),
+        &dest_dir.join("contexts"),
+        ComponentType::Contexts,
+        &mut components,
+    )?;
+
     // Scan rules
     scan_directory(
         &source_dir.join("rules"),
@@ -117,9 +125,9 @@ fn scan_statusline(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Comp
     let binary_name = if cfg!(windows) {
         "statusline.exe"
     } else if cfg!(target_os = "macos") {
-        "statusline-macos"
+        "statusline_macos"
     } else {
-        "statusline-linux"
+        "statusline_linux"
     };
 
     let binary_path = statusline_dir.join(binary_name);
@@ -174,9 +182,9 @@ fn scan_hooks(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component
         let binary_name = if cfg!(windows) {
             format!("{}.exe", config.name)
         } else if cfg!(target_os = "macos") {
-            format!("{}-macos", config.name)
+            format!("{}_macos", config.name)
         } else {
-            format!("{}-linux", config.name)
+            format!("{}_linux", config.name)
         };
 
         let binary_path = path.join(&binary_name);

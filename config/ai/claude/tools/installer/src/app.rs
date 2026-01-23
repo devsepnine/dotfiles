@@ -13,6 +13,7 @@ use crate::tree::TreeView;
 pub enum Tab {
     Agents,
     Commands,
+    Contexts,
     Rules,
     Skills,
     Hooks,
@@ -28,6 +29,7 @@ impl Tab {
         &[
             Tab::Agents,
             Tab::Commands,
+            Tab::Contexts,
             Tab::Rules,
             Tab::Skills,
             Tab::Hooks,
@@ -43,14 +45,15 @@ impl Tab {
         match self {
             Tab::Agents => 0,
             Tab::Commands => 1,
-            Tab::Rules => 2,
-            Tab::Skills => 3,
-            Tab::Hooks => 4,
-            Tab::OutputStyles => 5,
-            Tab::Statusline => 6,
-            Tab::Config => 7,
-            Tab::McpServers => 8,
-            Tab::Plugins => 9,
+            Tab::Contexts => 2,
+            Tab::Rules => 3,
+            Tab::Skills => 4,
+            Tab::Hooks => 5,
+            Tab::OutputStyles => 6,
+            Tab::Statusline => 7,
+            Tab::Config => 8,
+            Tab::McpServers => 9,
+            Tab::Plugins => 10,
         }
     }
 
@@ -62,6 +65,7 @@ impl Tab {
         match self {
             Tab::Agents => "Agents",
             Tab::Commands => "Commands",
+            Tab::Contexts => "Contexts",
             Tab::Rules => "Rules",
             Tab::Skills => "Skills",
             Tab::Hooks => "Hooks",
@@ -77,6 +81,7 @@ impl Tab {
         match self {
             Tab::Agents => Some(ComponentType::Agents),
             Tab::Commands => Some(ComponentType::Commands),
+            Tab::Contexts => Some(ComponentType::Contexts),
             Tab::Rules => Some(ComponentType::Rules),
             Tab::Skills => Some(ComponentType::Skills),
             Tab::Hooks => Some(ComponentType::Hooks),
@@ -300,6 +305,13 @@ impl App {
             .unwrap_or(false)
     }
 
+    /// Check if current folder is expanded
+    pub fn is_current_folder_expanded(&self) -> bool {
+        self.tree_views.get(&self.tab)
+            .map(|t| t.is_current_folder_expanded())
+            .unwrap_or(false)
+    }
+
     /// Toggle expand/collapse for current folder
     pub fn toggle_folder_expand(&mut self) {
         if let Some(tree) = self.tree_views.get_mut(&self.tab) {
@@ -318,6 +330,13 @@ impl App {
     pub fn collapse_folder(&mut self) {
         if let Some(tree) = self.tree_views.get_mut(&self.tab) {
             tree.collapse();
+        }
+    }
+
+    /// Collapse parent folder (when cursor is on a file or subfolder)
+    pub fn collapse_parent_folder(&mut self) {
+        if let Some(tree) = self.tree_views.get_mut(&self.tab) {
+            tree.collapse_parent();
         }
     }
 
@@ -797,6 +816,7 @@ fn build_tree_views(components: &[Component]) -> HashMap<Tab, TreeView> {
     let component_tabs = [
         (Tab::Agents, ComponentType::Agents),
         (Tab::Commands, ComponentType::Commands),
+        (Tab::Contexts, ComponentType::Contexts),
         (Tab::Rules, ComponentType::Rules),
         (Tab::Skills, ComponentType::Skills),
         (Tab::Hooks, ComponentType::Hooks),
