@@ -131,16 +131,35 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
             // Extract just the filename (last part of path)
             let filename = c.name.rsplit('/').next().unwrap_or(&c.name);
 
-            let line = Line::from(vec![
+            // For hooks, show description and event
+            let mut spans = vec![
                 Span::raw(format!("{}{} ", indent, checkbox)),
                 Span::styled(
-                    format!("{:<36}", filename),
+                    format!("{:<20}", filename),
                     Style::default().fg(Color::White),
                 ),
                 Span::styled(format!("({:^9})", c.status.display()), status_style),
                 Span::styled(default_marker, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-            ]);
+            ];
 
+            if app.tab == Tab::Hooks {
+                if let Some(ref config) = c.hook_config {
+                    // Add event info
+                    spans.push(Span::styled(
+                        format!(" [{}]", config.event),
+                        Style::default().fg(Color::Magenta),
+                    ));
+                    // Add description if available
+                    if let Some(ref desc) = config.description {
+                        spans.push(Span::styled(
+                            format!(" - {}", desc),
+                            Style::default().fg(Color::DarkGray),
+                        ));
+                    }
+                }
+            }
+
+            let line = Line::from(spans);
             ListItem::new(line)
         }
     }

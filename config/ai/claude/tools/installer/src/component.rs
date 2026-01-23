@@ -57,6 +57,8 @@ pub struct HookConfig {
     pub hook_type: String,
     #[serde(default)]
     pub timeout: Option<u32>,
+    #[serde(default)]
+    pub description: Option<String>,
 }
 
 #[derive(Clone, Debug)]
