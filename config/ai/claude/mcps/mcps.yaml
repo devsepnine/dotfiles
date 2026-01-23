@@ -16,10 +16,21 @@ servers:
     url: "https://docs.ggpayhub.com/mcp"
     category: docs
 
+  - name: cloudflare-docs
+    description: "Cloudflare 문서 검색"
+    type: http
+    url: "https://docs.mcp.cloudflare.com/mcp"
+    category: docs
+
   # Reasoning & Thinking
   - name: sequential-thinking
     description: "순차적 사고 (Chain of Thought)"
     command: "npx -y @modelcontextprotocol/server-sequential-thinking"
+    category: reasoning
+
+  - name: memory
+    description: "세션 간 메모리 유지"
+    command: "npx -y @modelcontextprotocol/server-memory"
     category: reasoning
 
   # Framework Support
@@ -34,11 +45,23 @@ servers:
     command: "npx shadcn@latest mcp"
     category: ui
 
+  - name: magic
+    description: "Magic UI 컴포넌트"
+    command: "npx -y @magicuidesign/mcp@latest"
+    category: ui
+
   # Automation
   - name: playwright
     description: "브라우저 자동화 (Playwright)"
     command: "npx -y @playwright/mcp@latest"
     category: automation
+
+  - name: firecrawl
+    description: "웹 스크래핑 및 크롤링"
+    command: "npx -y firecrawl-mcp"
+    category: automation
+    env:
+      - FIRECRAWL_API_KEY
 
   # Productivity
   - name: atlassian
@@ -66,3 +89,51 @@ servers:
     category: productivity
     env:
       - GITHUB_PERSONAL_ACCESS_TOKEN
+
+  # Database & Backend
+  - name: supabase
+    description: "Supabase 데이터베이스 작업"
+    command: "npx -y @supabase/mcp-server-supabase@latest --project-ref=YOUR_PROJECT_REF"
+    category: database
+
+  - name: clickhouse
+    description: "ClickHouse 분석 쿼리"
+    type: http
+    url: "https://mcp.clickhouse.cloud/mcp"
+    category: database
+
+  # Deployment & Infrastructure
+  - name: vercel
+    description: "Vercel 배포 및 프로젝트 관리"
+    type: http
+    url: "https://mcp.vercel.com"
+    category: deployment
+
+  - name: railway
+    description: "Railway 배포"
+    command: "npx -y @railway/mcp-server"
+    category: deployment
+
+  - name: cloudflare-workers-builds
+    description: "Cloudflare Workers 빌드"
+    type: http
+    url: "https://builds.mcp.cloudflare.com/mcp"
+    category: deployment
+
+  - name: cloudflare-workers-bindings
+    description: "Cloudflare Workers 바인딩"
+    type: http
+    url: "https://bindings.mcp.cloudflare.com/mcp"
+    category: deployment
+
+  - name: cloudflare-observability
+    description: "Cloudflare 로그/모니터링"
+    type: http
+    url: "https://observability.mcp.cloudflare.com/mcp"
+    category: deployment
+
+  # System & Tools
+  - name: filesystem
+    description: "파일시스템 작업"
+    command: "npx -y @modelcontextprotocol/server-filesystem /path/to/your/projects"
+    category: system
