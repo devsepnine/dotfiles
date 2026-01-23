@@ -1,17 +1,25 @@
-use memory_persistence_hooks::{get_sessions_dir, get_learned_dir, eprintln_hook};
+use memory_persistence_hooks::{get_sessions_dir, get_learned_dir, log_start, log_end, log_error, log_hook, eprintln_hook};
 use std::fs;
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
 
 fn main() {
+    log_start("SessionStart");
+
     if let Err(e) = run() {
-        eprintln!("Error in session-start: {}", e);
+        let error_msg = format!("{}", e);
+        log_error("SessionStart", &error_msg);
         std::process::exit(1);
     }
+
+    log_end("SessionStart");
 }
 
 fn run() -> std::io::Result<()> {
     let sessions_dir = get_sessions_dir()?;
+    let _ = log_hook("SessionStart", &format!("Sessions dir: {}", sessions_dir.display()));
+
     let learned_dir = get_learned_dir()?;
+    let _ = log_hook("SessionStart", &format!("Learned dir: {}", learned_dir.display()));
 
     // Check for recent session files (last 7 days)
     let seven_days_ago = SystemTime::now()
@@ -39,10 +47,17 @@ fn run() -> std::io::Result<()> {
         // Sort by modification time (newest first)
         recent_sessions.sort_by(|a, b| b.0.cmp(&a.0));
 
-        eprintln_hook(&format!("[SessionStart] Found {} recent session(s)", recent_sessions.len()));
+        let msg = format!("Found {} recent session(s)", recent_sessions.len());
+        let _ = log_hook("SessionStart", &msg);
+        eprintln_hook(&format!("[SessionStart] {}", msg));
+
         if let Some((_, latest_path)) = recent_sessions.first() {
-            eprintln_hook(&format!("[SessionStart] Latest: {}", latest_path.display()));
+            let msg = format!("Latest session: {}", latest_path.display());
+            let _ = log_hook("SessionStart", &msg);
+            eprintln_hook(&format!("[SessionStart] {}", msg));
         }
+    } else {
+        let _ = log_hook("SessionStart", "No recent sessions found");
     }
 
     // Check for learned skills
@@ -60,11 +75,15 @@ fn run() -> std::io::Result<()> {
     };
 
     if learned_count > 0 {
-        eprintln_hook(&format!(
-            "[SessionStart] {} learned skill(s) available in {}",
+        let msg = format!(
+            "{} learned skill(s) available in {}",
             learned_count,
             learned_dir.display()
-        ));
+        );
+        let _ = log_hook("SessionStart", &msg);
+        eprintln_hook(&format!("[SessionStart] {}", msg));
+    } else {
+        let _ = log_hook("SessionStart", "No learned skills found");
     }
 
     Ok(())

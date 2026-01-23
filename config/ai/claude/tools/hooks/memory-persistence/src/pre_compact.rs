@@ -1,17 +1,24 @@
-use memory_persistence_hooks::{get_sessions_dir, format_datetime, format_time, eprintln_hook};
+use memory_persistence_hooks::{get_sessions_dir, format_datetime, format_time, log_start, log_end, log_error, log_hook, eprintln_hook};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::time::SystemTime;
 
 fn main() {
+    log_start("PreCompact");
+
     if let Err(e) = run() {
-        eprintln!("Error in pre-compact: {}", e);
+        let error_msg = format!("{}", e);
+        log_error("PreCompact", &error_msg);
         std::process::exit(1);
     }
+
+    log_end("PreCompact");
 }
 
 fn run() -> std::io::Result<()> {
     let sessions_dir = get_sessions_dir()?;
+    let _ = log_hook("PreCompact", &format!("Sessions dir: {}", sessions_dir.display()));
+
     let compaction_log = sessions_dir.join("compaction-log.txt");
 
     // Log compaction event with timestamp
@@ -20,7 +27,9 @@ fn run() -> std::io::Result<()> {
         .append(true)
         .open(&compaction_log)?;
 
-    writeln!(file, "[{}] Context compaction triggered", format_datetime())?;
+    let timestamp = format_datetime();
+    writeln!(file, "[{}] Context compaction triggered", timestamp)?;
+    let _ = log_hook("PreCompact", &format!("Compaction triggered at {}", timestamp));
 
     // If there's an active session file, note the compaction
     // Find the most recently modified .tmp file
@@ -44,6 +53,8 @@ fn run() -> std::io::Result<()> {
     }
 
     if let Some(session_path) = active_session {
+        let _ = log_hook("PreCompact", &format!("Marking active session: {}", session_path.display()));
+
         let mut file = OpenOptions::new()
             .append(true)
             .open(&session_path)?;
@@ -55,6 +66,10 @@ fn run() -> std::io::Result<()> {
             "**[Compaction occurred at {}]** - Context was summarized",
             format_time()
         )?;
+
+        let _ = log_hook("PreCompact", "Compaction marker added to session file");
+    } else {
+        let _ = log_hook("PreCompact", "No active session found to mark");
     }
 
     eprintln_hook("[PreCompact] State saved before compaction");

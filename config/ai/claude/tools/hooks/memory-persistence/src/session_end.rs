@@ -1,20 +1,30 @@
-use memory_persistence_hooks::{get_sessions_dir, format_date, format_time, eprintln_hook};
+use memory_persistence_hooks::{get_sessions_dir, format_date, format_time, log_start, log_end, log_error, log_hook, eprintln_hook};
 use std::fs;
 use std::io::Read;
 
 fn main() {
+    log_start("SessionEnd");
+
     if let Err(e) = run() {
-        eprintln!("Error in session-end: {}", e);
+        let error_msg = format!("{}", e);
+        log_error("SessionEnd", &error_msg);
         std::process::exit(1);
     }
+
+    log_end("SessionEnd");
 }
 
 fn run() -> std::io::Result<()> {
     let sessions_dir = get_sessions_dir()?;
+    let _ = log_hook("SessionEnd", &format!("Sessions dir: {}", sessions_dir.display()));
+
     let today = format_date();
     let session_file = sessions_dir.join(format!("{}-session.tmp", today));
+    let _ = log_hook("SessionEnd", &format!("Target session file: {}", session_file.display()));
 
     if session_file.exists() {
+        let _ = log_hook("SessionEnd", "Session file exists - updating timestamp");
+
         // Update Last Updated timestamp
         let mut content = String::new();
         {
@@ -35,12 +45,16 @@ fn run() -> std::io::Result<()> {
                 &content[line_end..]
             )
         } else {
+            let _ = log_hook("SessionEnd", "Warning: Could not find 'Last Updated' line");
             content
         };
 
         fs::write(&session_file, updated_content)?;
+        let _ = log_hook("SessionEnd", &format!("Updated timestamp to {}", current_time));
         eprintln_hook(&format!("[SessionEnd] Updated session file: {}", session_file.display()));
     } else {
+        let _ = log_hook("SessionEnd", "Session file does not exist - creating new");
+
         // Create new session file with template
         let current_time = format_time();
         let template = format!(
@@ -73,6 +87,7 @@ r#"# Session: {}
         );
 
         fs::write(&session_file, template)?;
+        let _ = log_hook("SessionEnd", &format!("Created new session file at {}", current_time));
         eprintln_hook(&format!("[SessionEnd] Created session file: {}", session_file.display()));
     }
 
