@@ -2,10 +2,11 @@ use std::path::Path;
 use anyhow::Result;
 use serde_json::Value;
 
+use crate::app::TargetCli;
 use crate::component::{Component, ComponentType, HookConfig};
 use crate::mcp::{McpServer, McpScope};
 use crate::plugin::Plugin;
-use super::create_claude_command;
+use super::{create_claude_command, create_cli_command};
 
 pub fn install_component(component: &Component, _source_dir: &Path, dest_dir: &Path) -> Result<()> {
     match &component.component_type {
@@ -51,46 +52,69 @@ fn copy_file(component: &Component) -> Result<()> {
     Ok(())
 }
 
-pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Option<&str>, env_values: &[(String, String)]) -> Result<String> {
-    // Build command: claude mcp add [options] <name> [commandOrUrl] [args...]
-    let mut command = create_claude_command();
+pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Option<&str>, env_values: &[(String, String)], target_cli: TargetCli) -> Result<String> {
+    let mut command = create_cli_command(target_cli);
     command.arg("mcp").arg("add");
 
-    // Add scope flag
-    command.arg("--scope").arg(scope.display());
+    match target_cli {
+        TargetCli::Claude => {
+            // Claude: claude mcp add --scope user name -e KEY=val -t http url
+            // or: claude mcp add --scope user name -e KEY=val -- command args
+            command.arg("--scope").arg(scope.display());
+            command.arg(&server.def.name);
 
-    // Add server name
-    command.arg(&server.def.name);
+            // Add environment variables with -e flags
+            for (key, value) in env_values {
+                command.arg("-e").arg(format!("{}={}", key, value));
+            }
 
-    // Add environment variables with -e flags AFTER server name
-    for (key, value) in env_values {
-        command.arg("-e").arg(format!("{}={}", key, value));
-    }
+            if server.is_http() {
+                command.arg("-t").arg("http");
+                if let Some(url) = &server.def.url {
+                    command.arg(url);
+                }
+            } else {
+                command.arg("--");
+                if let Some(cmd_str) = &server.def.command {
+                    for part in cmd_str.split_whitespace() {
+                        command.arg(part);
+                    }
+                }
+            }
 
-    // Add transport-specific arguments
-    if server.is_http() {
-        // HTTP: claude mcp add --scope user name -e KEY=val -t http url
-        command.arg("-t").arg("http");
-        if let Some(url) = &server.def.url {
-            command.arg(url);
+            // Set working directory for local scope
+            if let Some(path) = project_path {
+                command.current_dir(path);
+            }
         }
-    } else {
-        // stdio: claude mcp add --scope user name -e KEY=val -- command args
-        command.arg("--");
-        if let Some(cmd_str) = &server.def.command {
-            // Split command into parts and add them
-            for part in cmd_str.split_whitespace() {
-                command.arg(part);
+        TargetCli::Codex => {
+            // Codex: codex mcp add --env KEY=VALUE name --url URL
+            // or: codex mcp add --env KEY=VALUE name -- command args
+
+            // Add environment variables with --env flags BEFORE name
+            for (key, value) in env_values {
+                command.arg("--env").arg(format!("{}={}", key, value));
+            }
+
+            // Add server name
+            command.arg(&server.def.name);
+
+            if server.is_http() {
+                if let Some(url) = &server.def.url {
+                    command.arg("--url").arg(url);
+                }
+            } else {
+                command.arg("--");
+                if let Some(cmd_str) = &server.def.command {
+                    for part in cmd_str.split_whitespace() {
+                        command.arg(part);
+                    }
+                }
             }
         }
     }
 
-    // Set working directory for local scope
-    if let Some(path) = project_path {
-        command.current_dir(path);
-    }
-
-    // Execute: claude mcp add ... (capture output to avoid TUI corruption)
+    // Execute command (capture output to avoid TUI corruption)
     let output = command.output()?;
 
     if !output.status.success() {
@@ -101,9 +125,9 @@ pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Opt
     Ok(String::new())
 }
 
-pub fn remove_mcp_server(server: &McpServer) -> Result<()> {
-    // Build command: claude mcp remove <name>
-    let mut command = create_claude_command();
+pub fn remove_mcp_server(server: &McpServer, target_cli: TargetCli) -> Result<()> {
+    // Build command: <cli> mcp remove <name>
+    let mut command = create_cli_command(target_cli);
     command.args(["mcp", "remove", &server.def.name]);
 
     // Capture output to avoid TUI corruption

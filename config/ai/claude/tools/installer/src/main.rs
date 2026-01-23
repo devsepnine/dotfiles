@@ -7,6 +7,7 @@ mod tree;
 mod ui;
 
 use std::io;
+use std::thread;
 use anyhow::Result;
 use std::time::Duration;
 use crossterm::{
@@ -86,7 +87,7 @@ fn main() -> Result<()> {
                     Block::default()
                         .borders(Borders::ALL)
                         .border_style(Style::default().fg(Color::DarkGray))
-                        .title(" Claude Config Installer ")
+                        .title(" Config Installer ")
                         .title_style(Style::default().fg(Color::White)),
                 );
 
@@ -198,10 +199,11 @@ where
                     let tx_clone = process_tx.clone();
                     let is_removing = app.is_removing;
                     let tab = app.tab;
+                    let target_cli = app.target_cli.unwrap_or(app::TargetCli::Claude);
                     let process_data = prepare_process_data(app, idx);
 
                     thread::spawn(move || {
-                        let result = execute_process_step(process_data, is_removing, tab);
+                        let result = execute_process_step(process_data, is_removing, tab, target_cli);
                         let _ = tx_clone.send(result);
                     });
                 } else if !processing_active && app.processing_queue.is_empty() && app.needs_refresh && !app.refreshing {
@@ -211,13 +213,14 @@ where
                     let tx_clone = refresh_tx.clone();
                     let source_dir = app.source_dir.clone();
                     let dest_dir = app.dest_dir.clone();
+                    let target_cli = app.target_cli.unwrap_or(app::TargetCli::Claude);
 
                     thread::spawn(move || {
                         use crate::fs;
 
                         let result = (|| -> Result<RefreshResult> {
-                            let components = fs::scanner::scan_components(&source_dir, &dest_dir)?;
-                            let mcp_servers = fs::scanner::scan_mcp_servers(&source_dir)?;
+                            let components = fs::scanner::scan_components(&source_dir, &dest_dir, target_cli)?;
+                            let mcp_servers = fs::scanner::scan_mcp_servers(&source_dir, target_cli, &dest_dir)?;
                             let plugins = fs::scanner::scan_plugins(&source_dir)?;
                             Ok((components, mcp_servers, plugins))
                         })();
@@ -253,6 +256,48 @@ where
                 }
                 // else: Installation complete, just wait for user input to close
             }
+            app::View::CliSelection => {
+                if let Event::Key(key) = event::read()? {
+                    if key.kind == KeyEventKind::Press {
+                        handle_cli_selection(app, key.code, &refresh_tx)?;
+                    }
+                }
+            }
+            app::View::Loading => {
+                // Check for input (non-blocking with short timeout)
+                if poll(Duration::from_millis(100))? {
+                    if let Event::Key(key) = event::read()? {
+                        if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                            app.should_quit = true;
+                        }
+                    }
+                }
+
+                // Update animation
+                app.tick();
+
+                // Check if refresh thread completed
+                match refresh_rx.try_recv() {
+                    Ok(result) => {
+                        match result {
+                            Ok((components, mcp_servers, plugins)) => {
+                                app.finish_loading(components, mcp_servers, plugins);
+                            }
+                            Err(e) => {
+                                app.status_message = Some(format!("Error loading: {}", e));
+                                app.current_view = app::View::CliSelection;
+                            }
+                        }
+                    }
+                    Err(TryRecvError::Empty) => {
+                        // Still loading, continue
+                    }
+                    Err(TryRecvError::Disconnected) => {
+                        app.status_message = Some("Loading failed".to_string());
+                        app.current_view = app::View::CliSelection;
+                    }
+                }
+            }
             app::View::EnvInput => {
                 if let Event::Key(key) = event::read()? {
                     if key.kind == KeyEventKind::Press {
@@ -273,7 +318,7 @@ where
                         match app.current_view {
                             app::View::List => handle_list_input(app, key.code, key.modifiers)?,
                             app::View::Diff => handle_diff_input(app, key.code)?,
-                            app::View::EnvInput | app::View::ProjectPath | app::View::Installing => {} // Handled above
+                            app::View::CliSelection | app::View::Loading | app::View::EnvInput | app::View::ProjectPath | app::View::Installing => {} // Handled above
                         }
                     }
                 }
@@ -389,6 +434,51 @@ fn handle_installing_input(app: &mut App, key: KeyCode) -> Result<()> {
     Ok(())
 }
 
+fn handle_cli_selection(
+    app: &mut App,
+    key: KeyCode,
+    refresh_tx: &std::sync::mpsc::Sender<Result<(Vec<component::Component>, Vec<mcp::McpServer>, Vec<plugin::Plugin>)>>,
+) -> Result<()> {
+    match key {
+        KeyCode::Char('1') => {
+            app.select_cli(app::TargetCli::Claude)?;
+            start_loading_thread(app, refresh_tx);
+        }
+        KeyCode::Char('2') => {
+            app.select_cli(app::TargetCli::Codex)?;
+            start_loading_thread(app, refresh_tx);
+        }
+        KeyCode::Char('q') => app.should_quit = true,
+        _ => {}
+    }
+    Ok(())
+}
+
+fn start_loading_thread(
+    app: &App,
+    refresh_tx: &std::sync::mpsc::Sender<Result<(Vec<component::Component>, Vec<mcp::McpServer>, Vec<plugin::Plugin>)>>,
+) {
+    let tx_clone = refresh_tx.clone();
+    let source_dir = app.source_dir.clone();
+    let dest_dir = app.dest_dir.clone();
+    let target_cli = app.target_cli.unwrap_or(app::TargetCli::Claude);
+
+    thread::spawn(move || {
+        let components = fs::scanner::scan_components(&source_dir, &dest_dir, target_cli);
+        let mcp_servers = fs::scanner::scan_mcp_servers(&source_dir, target_cli, &dest_dir);
+        let plugins = fs::scanner::scan_plugins(&source_dir);
+
+        match (components, mcp_servers, plugins) {
+            (Ok(c), Ok(m), Ok(p)) => {
+                let _ = tx_clone.send(Ok((c, m, p)));
+            }
+            (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
+                let _ = tx_clone.send(Err(e));
+            }
+        }
+    });
+}
+
 fn handle_env_input(app: &mut App, key: KeyCode) -> Result<()> {
     match key {
         KeyCode::Esc => app.env_input_cancel(),
@@ -480,17 +570,17 @@ fn get_item_name(app: &App, idx: usize) -> String {
     }
 }
 
-fn execute_process_step(data: ProcessData, is_removing: bool, _tab: app::Tab) -> Result<String> {
+fn execute_process_step(data: ProcessData, is_removing: bool, _tab: app::Tab, target_cli: app::TargetCli) -> Result<String> {
     match data {
         ProcessData::McpServer { server, scope, project_path, env_values } => {
             let name = server.def.name.clone();
             if is_removing {
-                match fs::installer::remove_mcp_server(&server) {
+                match fs::installer::remove_mcp_server(&server, target_cli) {
                     Ok(_) => Ok(format!("[OK] Removed {}", name)),
                     Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
                 }
             } else {
-                match fs::installer::install_mcp_server(&server, scope, project_path.as_deref(), &env_values) {
+                match fs::installer::install_mcp_server(&server, scope, project_path.as_deref(), &env_values, target_cli) {
                     Ok(_) => Ok(format!("[OK] Installed {}", name)),
                     Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
                 }

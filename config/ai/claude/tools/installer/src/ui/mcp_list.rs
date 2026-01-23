@@ -11,8 +11,10 @@ use crate::mcp::McpStatus;
 
 pub fn render(f: &mut Frame, app: &App, area: Rect) {
     if app.mcp_servers.is_empty() {
+        let message = "No MCP servers found. Create mcps/mcps.yaml to add servers.";
+
         let empty = List::new(vec![ListItem::new(Line::from(vec![Span::styled(
-            "No MCP servers found. Create mcps/mcps.yaml to add servers.",
+            message,
             Style::default().fg(Color::Gray),
         )]))])
         .block(

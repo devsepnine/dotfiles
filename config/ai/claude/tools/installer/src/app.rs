@@ -9,6 +9,34 @@ use crate::fs;
 use crate::component::ComponentType;
 use crate::tree::TreeView;
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum TargetCli {
+    Claude,
+    Codex,
+}
+
+impl TargetCli {
+    pub fn display_name(&self) -> &str {
+        match self {
+            Self::Claude => "Claude Code",
+            Self::Codex => "Codex CLI",
+        }
+    }
+
+    pub fn config_dir_name(&self) -> &str {
+        match self {
+            Self::Claude => ".claude",
+            Self::Codex => ".codex",
+        }
+    }
+
+    pub fn get_dest_dir(&self) -> Result<PathBuf> {
+        let home = dirs::home_dir()
+            .ok_or_else(|| anyhow::anyhow!("Cannot find home directory"))?;
+        Ok(home.join(self.config_dir_name()))
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Tab {
     Agents,
@@ -41,24 +69,11 @@ impl Tab {
         ]
     }
 
-    pub fn index(&self) -> usize {
-        match self {
-            Tab::Agents => 0,
-            Tab::Commands => 1,
-            Tab::Contexts => 2,
-            Tab::Rules => 3,
-            Tab::Skills => 4,
-            Tab::Hooks => 5,
-            Tab::OutputStyles => 6,
-            Tab::Statusline => 7,
-            Tab::Config => 8,
-            Tab::McpServers => 9,
-            Tab::Plugins => 10,
+    pub fn for_cli(cli: TargetCli) -> Vec<Tab> {
+        match cli {
+            TargetCli::Claude => Self::all().to_vec(),
+            TargetCli::Codex => vec![Tab::Skills, Tab::McpServers],
         }
-    }
-
-    pub fn from_index(idx: usize) -> Option<Tab> {
-        Tab::all().get(idx).copied()
     }
 
     pub fn display_name(&self) -> &str {
@@ -93,20 +108,12 @@ impl Tab {
         }
     }
 
-    pub fn next(&self) -> Tab {
-        let idx = (self.index() + 1) % Tab::all().len();
-        Tab::from_index(idx).unwrap()
-    }
-
-    pub fn prev(&self) -> Tab {
-        let len = Tab::all().len();
-        let idx = (self.index() + len - 1) % len;
-        Tab::from_index(idx).unwrap()
-    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum View {
+    CliSelection,
+    Loading,
     List,
     Diff,
     EnvInput,
@@ -115,6 +122,8 @@ pub enum View {
 }
 
 pub struct App {
+    pub target_cli: Option<TargetCli>,
+    pub available_tabs: Vec<Tab>,
     pub tab: Tab,
     pub current_view: View,
     pub should_quit: bool,
@@ -168,28 +177,27 @@ pub struct App {
 impl App {
     pub fn new() -> Result<Self> {
         let source_dir = find_source_dir()?;
+        // Start with temporary dest_dir, will be set after CLI selection
         let dest_dir = dirs::home_dir()
             .ok_or_else(|| anyhow::anyhow!("Cannot find home directory"))?
             .join(".claude");
 
-        let components = fs::scanner::scan_components(&source_dir, &dest_dir)?;
-        let mcp_servers = fs::scanner::scan_mcp_servers(&source_dir)?;
-        let plugins = fs::scanner::scan_plugins(&source_dir)?;
+        // Initialize with empty data, will scan after CLI selection
+        let components = Vec::new();
+        let mcp_servers = Vec::new();
+        let plugins = Vec::new();
+        let tree_views = HashMap::new();
 
         // Default project path to current directory
         let default_project = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_default();
 
-        // Read current settings
-        let (current_output_style, current_statusline) = read_current_settings(&dest_dir);
-
-        // Build tree views for each component tab
-        let tree_views = build_tree_views(&components);
-
         Ok(Self {
+            target_cli: None,
+            available_tabs: Vec::new(), // Will be set after CLI selection
             tab: Tab::Agents,
-            current_view: View::List,
+            current_view: View::CliSelection,
             should_quit: false,
             components,
             list_index: 0,
@@ -205,8 +213,8 @@ impl App {
             source_dir,
             dest_dir,
             status_message: None,
-            current_output_style,
-            current_statusline,
+            current_output_style: None,
+            current_statusline: None,
             processing_progress: None,
             processing_total: None,
             processing_log: Vec::new(),
@@ -225,6 +233,42 @@ impl App {
         })
     }
 
+    pub fn select_cli(&mut self, cli: TargetCli) -> Result<()> {
+        self.target_cli = Some(cli);
+        self.dest_dir = cli.get_dest_dir()?;
+
+        // Set available tabs based on CLI
+        self.available_tabs = Tab::for_cli(cli);
+
+        // Switch to first available tab
+        self.tab = self.available_tabs.first().copied().unwrap_or(Tab::Skills);
+
+        // Switch to loading view - actual scanning will be done in background
+        self.current_view = View::Loading;
+
+        Ok(())
+    }
+
+    pub fn finish_loading(&mut self, components: Vec<Component>, mcp_servers: Vec<McpServer>, plugins: Vec<Plugin>) {
+        self.components = components;
+        self.mcp_servers = mcp_servers;
+        self.plugins = plugins;
+
+        // Read current settings
+        let (current_output_style, current_statusline) = read_current_settings(&self.dest_dir);
+        self.current_output_style = current_output_style;
+        self.current_statusline = current_statusline;
+
+        // Build tree views
+        self.tree_views = build_tree_views(&self.components);
+
+        // Switch to list view
+        self.current_view = View::List;
+        if let Some(cli) = self.target_cli {
+            self.status_message = Some(format!("Selected {}", cli.display_name()));
+        }
+    }
+
     /// Get components filtered by current tab
     pub fn current_components(&self) -> Vec<(usize, &Component)> {
         if let Some(comp_type) = self.tab.to_component_type() {
@@ -239,17 +283,27 @@ impl App {
     }
 
     pub fn next_tab(&mut self) {
-        self.tab = self.tab.next();
-        self.list_index = 0;
+        if let Some(current_idx) = self.available_tabs.iter().position(|t| *t == self.tab) {
+            let next_idx = (current_idx + 1) % self.available_tabs.len();
+            self.tab = self.available_tabs[next_idx];
+            self.list_index = 0;
+        }
     }
 
     pub fn prev_tab(&mut self) {
-        self.tab = self.tab.prev();
-        self.list_index = 0;
+        if let Some(current_idx) = self.available_tabs.iter().position(|t| *t == self.tab) {
+            let prev_idx = if current_idx == 0 {
+                self.available_tabs.len() - 1
+            } else {
+                current_idx - 1
+            };
+            self.tab = self.available_tabs[prev_idx];
+            self.list_index = 0;
+        }
     }
 
     pub fn set_tab(&mut self, idx: usize) {
-        if let Some(tab) = Tab::from_index(idx) {
+        if let Some(&tab) = self.available_tabs.get(idx) {
             self.tab = tab;
             self.list_index = 0;
         }

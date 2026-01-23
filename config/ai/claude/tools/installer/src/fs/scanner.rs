@@ -2,70 +2,74 @@ use std::path::Path;
 use anyhow::Result;
 use walkdir::WalkDir;
 
+use crate::app::TargetCli;
 use crate::component::{Component, ComponentType, HookConfig, InstallStatus};
 use crate::mcp::{McpCatalog, McpServer, McpStatus};
 use crate::plugin::{parse_plugins_yaml, Plugin, PluginDef, PluginStatus};
 use super::create_claude_command;
 
-pub fn scan_components(source_dir: &Path, dest_dir: &Path) -> Result<Vec<Component>> {
+pub fn scan_components(source_dir: &Path, dest_dir: &Path, target_cli: TargetCli) -> Result<Vec<Component>> {
     let mut components = Vec::new();
 
-    // Scan agents
-    scan_directory(
-        &source_dir.join("agents"),
-        &dest_dir.join("agents"),
-        ComponentType::Agents,
-        &mut components,
-    )?;
+    match target_cli {
+        TargetCli::Claude => {
+            // Scan all components for Claude Code
+            scan_directory(
+                &source_dir.join("agents"),
+                &dest_dir.join("agents"),
+                ComponentType::Agents,
+                &mut components,
+            )?;
 
-    // Scan commands
-    scan_directory(
-        &source_dir.join("commands"),
-        &dest_dir.join("commands"),
-        ComponentType::Commands,
-        &mut components,
-    )?;
+            scan_directory(
+                &source_dir.join("commands"),
+                &dest_dir.join("commands"),
+                ComponentType::Commands,
+                &mut components,
+            )?;
 
-    // Scan contexts
-    scan_directory(
-        &source_dir.join("contexts"),
-        &dest_dir.join("contexts"),
-        ComponentType::Contexts,
-        &mut components,
-    )?;
+            scan_directory(
+                &source_dir.join("contexts"),
+                &dest_dir.join("contexts"),
+                ComponentType::Contexts,
+                &mut components,
+            )?;
 
-    // Scan rules
-    scan_directory(
-        &source_dir.join("rules"),
-        &dest_dir.join("rules"),
-        ComponentType::Rules,
-        &mut components,
-    )?;
+            scan_directory(
+                &source_dir.join("rules"),
+                &dest_dir.join("rules"),
+                ComponentType::Rules,
+                &mut components,
+            )?;
 
-    // Scan skills
-    scan_directory(
-        &source_dir.join("skills"),
-        &dest_dir.join("skills"),
-        ComponentType::Skills,
-        &mut components,
-    )?;
+            scan_directory(
+                &source_dir.join("skills"),
+                &dest_dir.join("skills"),
+                ComponentType::Skills,
+                &mut components,
+            )?;
 
-    // Scan output-styles
-    scan_directory(
-        &source_dir.join("output-styles"),
-        &dest_dir.join("output-styles"),
-        ComponentType::OutputStyles,
-        &mut components,
-    )?;
+            scan_directory(
+                &source_dir.join("output-styles"),
+                &dest_dir.join("output-styles"),
+                ComponentType::OutputStyles,
+                &mut components,
+            )?;
 
-    // Scan statusline (OS-specific binary)
-    scan_statusline(source_dir, dest_dir, &mut components)?;
-
-    // Scan hooks (special handling for Rust projects)
-    scan_hooks(source_dir, dest_dir, &mut components)?;
-
-    // Config files
-    add_config_files(source_dir, dest_dir, &mut components)?;
+            scan_statusline(source_dir, dest_dir, &mut components)?;
+            scan_hooks(source_dir, dest_dir, &mut components)?;
+            add_config_files(source_dir, dest_dir, &mut components)?;
+        }
+        TargetCli::Codex => {
+            // Only scan skills for Codex CLI
+            scan_directory(
+                &source_dir.join("skills"),
+                &dest_dir.join("skills"),
+                ComponentType::Skills,
+                &mut components,
+            )?;
+        }
+    }
 
     Ok(components)
 }
@@ -266,7 +270,8 @@ fn determine_status(source: &Path, dest: &Path) -> Result<InstallStatus> {
     }
 }
 
-pub fn scan_mcp_servers(source_dir: &Path) -> Result<Vec<McpServer>> {
+pub fn scan_mcp_servers(source_dir: &Path, target_cli: TargetCli, _dest_dir: &Path) -> Result<Vec<McpServer>> {
+    // Both CLIs use the same catalog
     let catalog_path = source_dir.join("mcps/mcps.yaml");
 
     if !catalog_path.exists() {
@@ -276,8 +281,11 @@ pub fn scan_mcp_servers(source_dir: &Path) -> Result<Vec<McpServer>> {
     let content = std::fs::read_to_string(&catalog_path)?;
     let catalog: McpCatalog = serde_yaml::from_str(&content)?;
 
-    // Get installed MCP servers
-    let installed = get_installed_mcp_servers();
+    // Get installed MCP servers based on CLI
+    let installed = match target_cli {
+        TargetCli::Claude => get_installed_claude_mcp_servers(),
+        TargetCli::Codex => get_installed_codex_mcp_servers(),
+    };
 
     let servers = catalog
         .servers
@@ -295,7 +303,7 @@ pub fn scan_mcp_servers(source_dir: &Path) -> Result<Vec<McpServer>> {
     Ok(servers)
 }
 
-fn get_installed_mcp_servers() -> Vec<String> {
+fn get_installed_claude_mcp_servers() -> Vec<String> {
     let mut cmd = create_claude_command();
     cmd.args(["mcp", "list"]);
     let output = cmd.output();
@@ -317,6 +325,38 @@ fn get_installed_mcp_servers() -> Vec<String> {
                     let name = trimmed.split(':').next()?.trim();
                     // Filter out lines that don't have the expected format
                     if name.is_empty() || !trimmed.contains(':') {
+                        return None;
+                    }
+                    Some(name.to_string())
+                })
+                .collect()
+        }
+        _ => Vec::new(),
+    }
+}
+
+fn get_installed_codex_mcp_servers() -> Vec<String> {
+    use std::process::Command;
+
+    let mut cmd = Command::new("codex");
+    cmd.args(["mcp", "list"]);
+    let output = cmd.output();
+
+    match output {
+        Ok(out) if out.status.success() => {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            stdout
+                .lines()
+                .skip(1) // Skip header line ("Name  Command  Args...")
+                .filter_map(|line| {
+                    let trimmed = line.trim();
+                    if trimmed.is_empty() {
+                        return None;
+                    }
+                    // Parse Codex MCP list output format (table format)
+                    // Extract first column (server name) from whitespace-separated table
+                    let name = trimmed.split_whitespace().next()?.trim();
+                    if name.is_empty() {
                         return None;
                     }
                     Some(name.to_string())
