@@ -95,7 +95,7 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
             } else if app.tab == Tab::Plugins {
                 "[Space] Toggle  [i] Install  [r] Remove  [Tab/1-0,-] Switch Tab  [q] Quit"
             } else if app.tab == Tab::OutputStyles || app.tab == Tab::Statusline {
-                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [s] Set Default  [Tab/1-0,-] Switch Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [s] Set [u] Unset  [Tab/1-0,-] Switch Tab  [q] Quit"
             } else {
                 "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [h/l/←/→] Folder Nav  [Tab/1-0,-] Switch Tab  [q] Quit"
             }

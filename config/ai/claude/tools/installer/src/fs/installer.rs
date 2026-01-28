@@ -258,6 +258,48 @@ pub fn set_statusline(dest_dir: &Path, script_name: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn unset_output_style(dest_dir: &Path) -> Result<()> {
+    let settings_path = dest_dir.join("settings.json");
+
+    if !settings_path.exists() {
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(&settings_path)?;
+    let mut settings: Value = serde_json::from_str(&content)?;
+
+    // Remove outputStyle key if it exists
+    if let Value::Object(ref mut map) = settings {
+        map.remove("outputStyle");
+    }
+
+    let output = serde_json::to_string_pretty(&settings)?;
+    std::fs::write(&settings_path, output)?;
+
+    Ok(())
+}
+
+pub fn unset_statusline(dest_dir: &Path) -> Result<()> {
+    let settings_path = dest_dir.join("settings.json");
+
+    if !settings_path.exists() {
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(&settings_path)?;
+    let mut settings: Value = serde_json::from_str(&content)?;
+
+    // Remove statusLine key if it exists
+    if let Value::Object(ref mut map) = settings {
+        map.remove("statusLine");
+    }
+
+    let output = serde_json::to_string_pretty(&settings)?;
+    std::fs::write(&settings_path, output)?;
+
+    Ok(())
+}
+
 fn merge_settings_json(source: &Path, dest: &Path) -> Result<()> {
     let source_content = std::fs::read_to_string(source)?;
     let source_json: Value = serde_json::from_str(&source_content)?;

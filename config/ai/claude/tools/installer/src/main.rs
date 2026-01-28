@@ -400,6 +400,14 @@ fn handle_list_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) -> Re
                 app.set_statusline()?;
             }
         }
+        KeyCode::Char('u') => {
+            // 'u' unsets default for OutputStyles or Statusline tabs
+            if app.tab == app::Tab::OutputStyles {
+                app.unset_default_style()?;
+            } else if app.tab == app::Tab::Statusline {
+                app.unset_statusline()?;
+            }
+        }
         KeyCode::Char('o') => {
             // 'o' toggles MCP scope (user/local) when on MCP tab
             if app.tab == app::Tab::McpServers {

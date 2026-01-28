@@ -29,12 +29,20 @@ fn render_tree(f: &mut Frame, app: &App, tree: &crate::tree::TreeView, area: Rec
         })
         .collect();
 
-    // Add hint for setting defaults when no default is set
+    // Show current default status in title
     let mut title = format!(" {} ", app.tab.display_name());
-    if app.tab == Tab::OutputStyles && app.current_output_style.is_none() {
-        title = format!("{} [No default - press 's' to set] ", title.trim());
-    } else if app.tab == Tab::Statusline && app.current_statusline.is_none() {
-        title = format!("{} [No default - press 's' to set] ", title.trim());
+    if app.tab == Tab::OutputStyles {
+        if let Some(ref style) = app.current_output_style {
+            title = format!("{} [Default: {}] ", title.trim(), style);
+        } else {
+            title = format!("{} [No default set] ", title.trim());
+        }
+    } else if app.tab == Tab::Statusline {
+        if let Some(ref statusline) = app.current_statusline {
+            title = format!("{} [Default: {}] ", title.trim(), statusline);
+        } else {
+            title = format!("{} [No default set] ", title.trim());
+        }
     }
 
     let list = List::new(items)
@@ -118,11 +126,11 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
             let default_marker = match app.tab {
                 Tab::OutputStyles | Tab::Statusline => {
                     if is_default {
-                        " (current)"
+                        " ★ DEFAULT"
                     } else if c.status == InstallStatus::New {
                         " (not installed)"
                     } else {
-                        " (available)"
+                        ""
                     }
                 }
                 _ => "",
@@ -196,11 +204,11 @@ fn render_flat(f: &mut Frame, app: &App, area: Rect) {
             let default_marker = match app.tab {
                 Tab::OutputStyles | Tab::Statusline => {
                     if is_default {
-                        " (current)"
+                        " ★ DEFAULT"
                     } else if c.status == InstallStatus::New {
                         " (not installed)"
                     } else {
-                        " (available)"
+                        ""
                     }
                 }
                 _ => "",
@@ -220,12 +228,20 @@ fn render_flat(f: &mut Frame, app: &App, area: Rect) {
         })
         .collect();
 
-    // Add hint for setting defaults when no default is set
+    // Show current default status in title
     let mut title = format!(" {} ", app.tab.display_name());
-    if app.tab == Tab::OutputStyles && app.current_output_style.is_none() {
-        title = format!("{} [No default - press 's' to set] ", title.trim());
-    } else if app.tab == Tab::Statusline && app.current_statusline.is_none() {
-        title = format!("{} [No default - press 's' to set] ", title.trim());
+    if app.tab == Tab::OutputStyles {
+        if let Some(ref style) = app.current_output_style {
+            title = format!("{} [Default: {}] ", title.trim(), style);
+        } else {
+            title = format!("{} [No default set] ", title.trim());
+        }
+    } else if app.tab == Tab::Statusline {
+        if let Some(ref statusline) = app.current_statusline {
+            title = format!("{} [Default: {}] ", title.trim(), statusline);
+        } else {
+            title = format!("{} [No default set] ", title.trim());
+        }
     }
 
     let list = List::new(items)

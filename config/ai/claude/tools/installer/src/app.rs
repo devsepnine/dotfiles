@@ -796,6 +796,32 @@ impl App {
         }
         Ok(())
     }
+
+    pub fn unset_default_style(&mut self) -> Result<()> {
+        // Only works for OutputStyles tab
+        if self.tab != Tab::OutputStyles {
+            self.status_message = Some("Switch to OutputStyles tab to unset default".to_string());
+            return Ok(());
+        }
+
+        fs::installer::unset_output_style(&self.dest_dir)?;
+        self.current_output_style = None;
+        self.status_message = Some("Unset default output style".to_string());
+        Ok(())
+    }
+
+    pub fn unset_statusline(&mut self) -> Result<()> {
+        // Only works for Statusline tab
+        if self.tab != Tab::Statusline {
+            self.status_message = Some("Switch to Statusline tab to unset default".to_string());
+            return Ok(());
+        }
+
+        fs::installer::unset_statusline(&self.dest_dir)?;
+        self.current_statusline = None;
+        self.status_message = Some("Unset statusline".to_string());
+        Ok(())
+    }
 }
 
 fn read_current_settings(dest_dir: &Path) -> (Option<String>, Option<String>) {
