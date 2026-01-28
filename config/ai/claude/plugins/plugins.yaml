@@ -40,4 +40,4 @@ marketplaces:
     source: https://github.com/thedotmack/claude-mem.git
     plugins:
       - name: claude-mem
-        description: 대화 메모리 (컨텍스트 저장/검색)
+        description: "** 현 시점 비추 ** 대화 메모리 (컨텍스트 저장/검색)"
