@@ -23,6 +23,46 @@ This skill provides best practices for Rust development across five key areas:
 4. **Testing** - Unit, integration, and property-based testing strategies
 5. **Project Structure** - Organizing Rust projects and workspaces
 
+## Default Configuration
+
+**🚀 ALWAYS USE RUST EDITION 2024 FOR NEW PROJECTS**
+
+```toml
+[package]
+name = "my-project"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"  # Minimum required version
+```
+
+For workspaces:
+```toml
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+```
+
+**Why Edition 2024?**
+- ✅ Native async fn in traits (no more async-trait crate!)
+- ✅ if let chains for cleaner pattern matching
+- ✅ Return position impl Trait in traits (RPITIT)
+- ✅ Improved type inference for closures and iterators
+- ✅ Better const fn capabilities for compile-time computation
+- ✅ Enhanced error messages with actionable suggestions
+- ✅ Improved lifetime elision
+- ✅ Better diagnostic attributes
+
+**See [edition-2024.md](references/edition-2024.md) for comprehensive Edition 2024 guide including:**
+- Key features and improvements
+- Migration guide from Edition 2021
+- Best practices and common patterns
+- Performance optimizations
+- Security considerations
+
 ## Core Principles
 
 ### 1. Ownership & Borrowing
@@ -281,9 +321,19 @@ See [testing.md](references/testing.md) for comprehensive testing strategies.
 Well-organized projects are easier to maintain and scale.
 
 **Best Practices**:
+
+**Example Cargo.toml**:
+```toml
+[package]
+name = "my-project"
+version = "0.1.0"
+edition = "2024"
+```
+
+**Project Structure**:
 ```
 my-project/
-├── Cargo.toml          # Project manifest
+├── Cargo.toml          # Project manifest (with edition = "2024")
 ├── Cargo.lock          # Dependency lockfile (commit for binaries)
 ├── src/
 │   ├── main.rs         # Binary entry point
@@ -318,6 +368,10 @@ members = [
     "crates/api",
     "crates/cli",
 ]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
 
 [workspace.dependencies]
 # Shared dependencies
@@ -334,6 +388,9 @@ serde = { version = "1.0", features = ["derive"] }
 
 **Dependency Management**:
 ```toml
+[package]
+edition = "2024"
+
 [dependencies]
 # Production dependencies
 tokio = { version = "1.35", features = ["rt-multi-thread", "macros"] }
@@ -482,6 +539,7 @@ expect_used = "deny"
 
 ## References
 
+- **[Edition 2024 Guide](references/edition-2024.md)** ⭐ Start here for Edition 2024 features
 - [Ownership & Borrowing Patterns](references/ownership-borrowing.md)
 - [Error Handling Strategies](references/error-handling.md)
 - [Async Programming Patterns](references/async-patterns.md)
