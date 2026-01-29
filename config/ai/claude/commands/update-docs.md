@@ -5,9 +5,9 @@ You are tasked with updating `/docs/README.md` to reflect the current state of t
 ## Your Responsibilities
 
 1. **Analyze Current Project Structure**
-   - Review the directory structure under `config/ai/claude/`
-   - Identify key components: agents, commands, contexts, rules, skills, hooks, mcps, output-styles, statusline, plugins, tools
    - Note any new directories or significant changes
+   - read package.json
+   - read .env.example
 
 2. **Review Recent Changes**
    - Check git status for uncommitted changes
@@ -25,7 +25,17 @@ You are tasked with updating `/docs/README.md` to reflect the current state of t
      - Removed or deprecated items
    - Keep the documentation concise and well-structured
 
-4. **Documentation Format**
+4. Generate docs/RUNBOOK.md with:
+   - Deployment procedures
+   - Monitoring and alerts
+   - Common issues and fixes
+   - Rollback procedures
+
+5. Identify obsolete documentation:
+   - Find docs not modified in 30+ days
+   - List for manual review
+
+6. **Documentation Format**
    The README should follow this structure:
    ```markdown
    # Project Documentation
@@ -66,7 +76,7 @@ You are tasked with updating `/docs/README.md` to reflect the current state of t
    - Removed: ...
    ```
 
-5. **Important Guidelines**
+7. **Important Guidelines**
    - ALWAYS read the current README first before making changes
    - Preserve existing content unless it's outdated
    - Use clear, concise language
