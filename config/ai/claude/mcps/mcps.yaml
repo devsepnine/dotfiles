@@ -10,12 +10,6 @@ servers:
     command: "npx -y ietf-datatracker-mcp"
     category: docs
 
-  - name: apipedia
-    description: "NSUS API 문서 조회"
-    type: http
-    url: "https://docs.ggpayhub.com/mcp"
-    category: docs
-
   - name: cloudflare-docs
     description: "Cloudflare 문서 검색"
     type: http
