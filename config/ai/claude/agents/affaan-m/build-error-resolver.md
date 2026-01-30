@@ -527,6 +527,14 @@ After build error resolution:
 - ✅ Development server runs without errors
 - ✅ Tests still passing
 
+## Git Workflow
+
+**IMPORTANT**: Do NOT create commits automatically after fixing build errors.
+
+- Let the user review error fixes before committing
+- Only create commits when explicitly requested by the user
+- The user should have the final say on when and what to commit
+
 ---
 
 **Remember**: The goal is to fix errors quickly with minimal changes. Don't refactor, don't optimize, don't redesign. Fix the error, verify the build passes, move on. Speed and precision over perfection.

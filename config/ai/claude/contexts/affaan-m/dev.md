@@ -18,3 +18,11 @@ Focus: Implementation, coding, building features
 - Edit, Write for code changes
 - Bash for running tests/builds
 - Grep, Glob for finding code
+
+## Git Workflow
+
+**IMPORTANT**: Do NOT create commits automatically after completing development tasks.
+
+- Let the user review all code changes before committing
+- Only create commits when explicitly requested by the user
+- The user should have the final say on when and what to commit

@@ -301,6 +301,14 @@ After cleanup session:
 - ✅ Bundle size reduced
 - ✅ No regressions in production
 
+## Git Workflow
+
+**IMPORTANT**: Do NOT create commits automatically after refactoring or cleanup.
+
+- Let the user review all deletions and changes before committing
+- Only create commits when explicitly requested by the user
+- The user should have the final say on when and what to commit
+
 ---
 
 **Remember**: Dead code is technical debt. Regular cleanup keeps the codebase maintainable and fast. But safety first - never remove code without understanding why it exists.

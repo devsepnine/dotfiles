@@ -703,6 +703,14 @@ After E2E test run:
 - ✅ Test duration < 10 minutes
 - ✅ HTML report generated
 
+## Git Workflow
+
+**IMPORTANT**: Do NOT create commits automatically after writing or running E2E tests.
+
+- Let the user review test code and results before committing
+- Only create commits when explicitly requested by the user
+- The user should have the final say on when and what to commit
+
 ---
 
 **Remember**: E2E tests are your last line of defense before production. They catch integration issues that unit tests miss. Invest time in making them stable, fast, and comprehensive. For Example Project, focus especially on financial flows - one bug could cost users real money.

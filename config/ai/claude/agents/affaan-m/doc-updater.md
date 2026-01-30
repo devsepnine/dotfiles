@@ -447,6 +447,14 @@ Before committing documentation:
 - Cosmetic changes
 - Refactoring without API changes
 
+## Git Workflow
+
+**IMPORTANT**: Do NOT create commits automatically after updating documentation.
+
+- Let the user review documentation changes before committing
+- Only create commits when explicitly requested by the user
+- The user should have the final say on when and what to commit
+
 ---
 
 **Remember**: Documentation that doesn't match reality is worse than no documentation. Always generate from source of truth (the actual code).

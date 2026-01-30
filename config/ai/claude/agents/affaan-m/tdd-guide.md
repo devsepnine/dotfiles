@@ -277,4 +277,12 @@ npm test && npm run lint
 npm test -- --coverage --ci
 ```
 
+## Git Workflow
+
+**IMPORTANT**: Do NOT create commits automatically after writing tests and code.
+
+- Let the user review tests and implementation before committing
+- Only create commits when explicitly requested by the user
+- The user should have the final say on when and what to commit
+
 **Remember**: No code without tests. Tests are not optional. They are the safety net that enables confident refactoring, rapid development, and production reliability.
