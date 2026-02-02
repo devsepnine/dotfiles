@@ -7,6 +7,7 @@ edition = "2024"
 # TUI
 ratatui = "0.30"
 crossterm = "0.29"
+terminal-light = "1.4"
 
 # Filesystem
 walkdir = "2.5"

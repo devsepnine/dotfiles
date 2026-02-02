@@ -8,6 +8,7 @@ use crate::plugin::Plugin;
 use crate::fs;
 use crate::component::ComponentType;
 use crate::tree::TreeView;
+use crate::theme::Theme;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TargetCli {
@@ -127,6 +128,7 @@ pub struct App {
     pub tab: Tab,
     pub current_view: View,
     pub should_quit: bool,
+    pub theme: Theme,
 
     pub components: Vec<Component>,
     pub list_index: usize, // Index within current tab's filtered list (legacy, for MCP/Plugins)
@@ -199,6 +201,7 @@ impl App {
             tab: Tab::Agents,
             current_view: View::CliSelection,
             should_quit: false,
+            theme: Theme::default(),
             components,
             list_index: 0,
             tree_views,

@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph},
     Frame,
@@ -44,29 +44,31 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
     let lines = vec![
         Line::from(""),
         Line::from(vec![
-            Span::styled("  Variable: ", Style::default().fg(Color::Gray)),
-            Span::styled(current_var, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+            Span::styled("  Variable: ", Style::default().fg(app.theme.text_secondary())),
+            Span::styled(current_var, Style::default().fg(app.theme.warning()).add_modifier(Modifier::BOLD)),
         ]),
         Line::from(""),
         Line::from(vec![
-            Span::styled("  Value: ", Style::default().fg(Color::Gray)),
-            Span::styled(&app.env_input_buffer, Style::default().fg(Color::White)),
-            Span::styled("_", Style::default().fg(Color::Cyan).add_modifier(Modifier::SLOW_BLINK)),
+            Span::styled("  Value: ", Style::default().fg(app.theme.text_secondary())),
+            Span::styled(&app.env_input_buffer, Style::default().fg(app.theme.text_primary())),
+            Span::styled("_", Style::default().fg(app.theme.accent_secondary()).add_modifier(Modifier::SLOW_BLINK)),
         ]),
         Line::from(""),
         Line::from(""),
         Line::from(vec![
-            Span::styled("  [Enter] Submit  [Esc] Cancel", Style::default().fg(Color::DarkGray)),
+            Span::styled("  [Enter] Submit  [Esc] Cancel", Style::default().fg(app.theme.text_muted())),
         ]),
     ];
 
     let paragraph = Paragraph::new(lines)
+        .style(Style::default().bg(app.theme.bg_secondary()))
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::Cyan))
+                .border_style(Style::default().fg(app.theme.border_focused()))
                 .title(title)
-                .title_style(Style::default().fg(Color::White)),
+                .title_style(Style::default().fg(app.theme.text_primary()))
+                .style(Style::default().bg(app.theme.bg_secondary())),
         )
         .alignment(Alignment::Left);
 
@@ -99,13 +101,13 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
                     "****".to_string()
                 };
                 Line::from(vec![
-                    Span::styled(format!("  {} = ", name), Style::default().fg(Color::Gray)),
-                    Span::styled(masked, Style::default().fg(Color::Green)),
+                    Span::styled(format!("  {} = ", name), Style::default().fg(app.theme.text_secondary())),
+                    Span::styled(masked, Style::default().fg(app.theme.success())),
                 ])
             })
             .collect();
 
-        collected_lines.insert(0, Line::from(Span::styled("  Collected:", Style::default().fg(Color::DarkGray))));
+        collected_lines.insert(0, Line::from(Span::styled("  Collected:", Style::default().fg(app.theme.text_muted()))));
 
         let collected = Paragraph::new(collected_lines);
         f.render_widget(collected, collected_horizontal[1]);

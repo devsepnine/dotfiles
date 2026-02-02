@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
@@ -13,12 +13,14 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
     if app.plugins.is_empty() {
         let empty = List::new(vec![ListItem::new(Line::from(vec![Span::styled(
             "No plugins found. Create plugins/plugins.yaml to add plugins.",
-            Style::default().fg(Color::Gray),
+            Style::default().fg(app.theme.text_muted()),
         )]))])
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(" Plugins "),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(" Plugins ")
+                .title_style(Style::default().fg(app.theme.text_primary())),
         );
         f.render_widget(empty, area);
         return;
@@ -37,8 +39,8 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
             };
 
             let status_style = match p.status {
-                PluginStatus::Installed => Style::default().fg(Color::Green),
-                PluginStatus::NotInstalled => Style::default().fg(Color::Gray),
+                PluginStatus::Installed => Style::default().fg(app.theme.success()),
+                PluginStatus::NotInstalled => Style::default().fg(app.theme.text_muted()),
             };
 
             // First line: checkbox, name, status
@@ -46,7 +48,7 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
                 Span::raw(format!("{} ", checkbox)),
                 Span::styled(
                     format!("{:<24}", p.def.name),
-                    Style::default().fg(Color::White),
+                    Style::default().fg(app.theme.text_primary()),
                 ),
                 Span::styled(
                     format!("({:^13})", p.status.display()),
@@ -62,14 +64,14 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
                 Span::raw("    "),
                 Span::styled(
                     short_repo.clone(),
-                    Style::default().fg(Color::Cyan),
+                    Style::default().fg(app.theme.accent_secondary()),
                 ),
             ];
 
             if !comment.is_empty() {
                 line2_spans.push(Span::styled(
                     format!(" # {}", comment),
-                    Style::default().fg(Color::DarkGray),
+                    Style::default().fg(app.theme.text_secondary()),
                 ));
             }
 
@@ -83,11 +85,14 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(" Plugins "),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(" Plugins ")
+                .title_style(Style::default().fg(app.theme.text_primary())),
         )
         .highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
+                .bg(app.theme.selection_bg())
+                .fg(app.theme.selection_fg())
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ");

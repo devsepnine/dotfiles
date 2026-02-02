@@ -23,6 +23,16 @@ pub fn get_spinner(frame: usize) -> &'static str {
 }
 
 pub fn draw(f: &mut Frame, app: &App) {
+    use ratatui::style::Style;
+
+    // Clear entire background with theme color
+    // This ensures terminal background doesn't show through
+    f.render_widget(
+        ratatui::widgets::Block::default()
+            .style(Style::default().bg(app.theme.bg_primary()).fg(app.theme.text_primary())),
+        f.area()
+    );
+
     // CLI selection screen takes full screen
     if app.current_view == View::CliSelection {
         cli_selection::render(f, app, f.area());
@@ -81,7 +91,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 
 fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
     use ratatui::{
-        style::{Color, Style},
+        style::Style,
         text::{Line, Span},
         widgets::{Block, Borders, Paragraph},
     };
@@ -91,13 +101,13 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
         View::Loading => "Loading...  [q] Quit",
         View::List => {
             if app.tab == Tab::McpServers {
-                "[Space] Toggle  [i] Install  [r] Remove  [o] Scope  [Tab/1-0,-] Switch Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [o] Scope  [t] Theme  [Tab/1-0,-] Switch  [q] Quit"
             } else if app.tab == Tab::Plugins {
-                "[Space] Toggle  [i] Install  [r] Remove  [Tab/1-0,-] Switch Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [t] Theme  [Tab/1-0,-] Switch  [q] Quit"
             } else if app.tab == Tab::OutputStyles || app.tab == Tab::Statusline {
-                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [s] Set [u] Unset  [Tab/1-0,-] Switch Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [s] Set [u] Unset  [t] Theme  [Tab/1-0,-] Switch  [q] Quit"
             } else {
-                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [h/l/←/→] Folder Nav  [Tab/1-0,-] Switch Tab  [q] Quit"
+                "[Space] Toggle  [i] Install  [r] Remove  [d] Diff  [h/l/←/→] Folder  [t] Theme  [Tab/1-0,-] Switch  [q] Quit"
             }
         }
         View::Diff => "[j/k/↑/↓] Scroll  [q/Esc] Close",
@@ -117,13 +127,15 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
     let status = app.status_message.as_deref().unwrap_or("");
 
     let spans = vec![
-        Span::styled(help_text, Style::default().fg(Color::Gray)),
+        Span::styled(help_text, Style::default().fg(app.theme.text_secondary())),
         Span::raw("  "),
-        Span::styled(status, Style::default().fg(Color::Yellow)),
+        Span::styled(status, Style::default().fg(app.theme.warning())),
     ];
 
     let paragraph = Paragraph::new(Line::from(spans))
-        .block(Block::default().borders(Borders::ALL));
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(app.theme.border())));
 
     f.render_widget(paragraph, area);
 }
@@ -131,7 +143,7 @@ fn render_status_bar(f: &mut Frame, app: &App, area: Rect) {
 fn render_loading_screen(f: &mut Frame, app: &App) {
     use ratatui::{
         layout::{Alignment, Constraint},
-        style::{Color, Modifier, Style},
+        style::{Modifier, Style},
         text::{Line, Span},
         widgets::{Block, Borders, Paragraph},
     };
@@ -165,27 +177,28 @@ fn render_loading_screen(f: &mut Frame, app: &App) {
             Span::styled(
                 spinner,
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(app.theme.spinner())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::raw("  "),
             Span::styled(
                 format!("Loading {} configuration...", cli_name),
-                Style::default().fg(Color::White),
+                Style::default().fg(app.theme.text_primary()),
             ),
         ]),
         Line::from(""),
     ];
 
     let loading = Paragraph::new(loading_text)
-        .style(Style::default().fg(Color::Cyan))
+        .style(Style::default().fg(app.theme.accent_primary()).bg(app.theme.bg_secondary()))
         .alignment(Alignment::Center)
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::DarkGray))
+                .border_style(Style::default().fg(app.theme.info()))
                 .title(" Config Installer ")
-                .title_style(Style::default().fg(Color::White)),
+                .title_style(Style::default().fg(app.theme.text_primary()))
+                .style(Style::default().bg(app.theme.bg_secondary())),
         );
 
     f.render_widget(loading, horizontal[1]);

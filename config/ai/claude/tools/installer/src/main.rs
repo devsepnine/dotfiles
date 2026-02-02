@@ -5,6 +5,7 @@ mod plugin;
 mod fs;
 mod tree;
 mod ui;
+mod theme;
 
 use std::io;
 use std::thread;
@@ -334,6 +335,10 @@ where
 fn handle_list_input(app: &mut App, key: KeyCode, modifiers: KeyModifiers) -> Result<()> {
     match key {
         KeyCode::Char('q') => app.should_quit = true,
+        KeyCode::Char('t') => {
+            app.theme.toggle();
+            app.status_message = Some(format!("Theme: {}", app.theme.mode().name()));
+        }
         // Tab navigation: Tab = next, Shift+Tab = prev
         KeyCode::Tab => {
             if modifiers.contains(KeyModifiers::SHIFT) {

@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
@@ -15,12 +15,14 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
 
         let empty = List::new(vec![ListItem::new(Line::from(vec![Span::styled(
             message,
-            Style::default().fg(Color::Gray),
+            Style::default().fg(app.theme.text_muted()),
         )]))])
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(" MCP Servers "),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(" MCP Servers ")
+                .title_style(Style::default().fg(app.theme.text_primary())),
         );
         f.render_widget(empty, area);
         return;
@@ -39,8 +41,8 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
             };
 
             let status_style = match m.status {
-                McpStatus::Installed => Style::default().fg(Color::Green),
-                McpStatus::NotInstalled => Style::default().fg(Color::Gray),
+                McpStatus::Installed => Style::default().fg(app.theme.success()),
+                McpStatus::NotInstalled => Style::default().fg(app.theme.text_muted()),
             };
 
             // First line: checkbox, name, status, category, env warning
@@ -48,7 +50,7 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
                 Span::raw(format!("{} ", checkbox)),
                 Span::styled(
                     format!("{:<24}", m.def.name),
-                    Style::default().fg(Color::White),
+                    Style::default().fg(app.theme.text_primary()),
                 ),
                 Span::styled(
                     format!("({:^13})", m.status.display()),
@@ -56,10 +58,10 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
                 ),
                 Span::styled(
                     format!(" [{}]", m.def.category),
-                    Style::default().fg(Color::Blue),
+                    Style::default().fg(app.theme.accent_primary()),
                 ),
                 if !m.def.env.is_empty() {
-                    Span::styled(" ⚠ env", Style::default().fg(Color::Yellow))
+                    Span::styled(" ⚠ env", Style::default().fg(app.theme.warning()))
                 } else {
                     Span::raw("")
                 },
@@ -70,7 +72,7 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
                 Span::raw("    "),
                 Span::styled(
                     m.def.description.clone(),
-                    Style::default().fg(Color::DarkGray),
+                    Style::default().fg(app.theme.text_secondary()),
                 ),
             ]);
 
@@ -83,11 +85,14 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(title),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(title)
+                .title_style(Style::default().fg(app.theme.text_primary())),
         )
         .highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
+                .bg(app.theme.selection_bg())
+                .fg(app.theme.selection_fg())
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ");

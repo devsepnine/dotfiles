@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame,
@@ -8,7 +8,7 @@ use ratatui::{
 
 use crate::app::App;
 
-pub fn render(f: &mut Frame, _app: &App, area: Rect) {
+pub fn render(f: &mut Frame, app: &App, area: Rect) {
     // Split into three sections: title, options, help
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -25,17 +25,21 @@ pub fn render(f: &mut Frame, _app: &App, area: Rect) {
         Line::from(Span::styled(
             "Config Installer",
             Style::default()
-                .fg(Color::Cyan)
+                .fg(app.theme.accent_secondary())
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
         Line::from(Span::styled(
             "Select target CLI",
-            Style::default().fg(Color::White),
+            Style::default().fg(app.theme.text_primary()),
         )),
     ])
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::ALL));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(app.theme.border())),
+    );
 
     f.render_widget(title, chunks[0]);
 
@@ -45,12 +49,12 @@ pub fn render(f: &mut Frame, _app: &App, area: Rect) {
             Line::from(Span::styled(
                 "1. Claude Code",
                 Style::default()
-                    .fg(Color::Green)
+                    .fg(app.theme.success())
                     .add_modifier(Modifier::BOLD),
             )),
             Line::from(Span::styled(
                 "   Anthropic's official CLI for Claude (~/.claude)",
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(app.theme.text_secondary()),
             )),
         ]),
         Line::from("").into(),
@@ -58,18 +62,24 @@ pub fn render(f: &mut Frame, _app: &App, area: Rect) {
             Line::from(Span::styled(
                 "2. Codex CLI",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(app.theme.warning())
                     .add_modifier(Modifier::BOLD),
             )),
             Line::from(Span::styled(
                 "   OpenAI's ChatGPT-based CLI (~/.codex)",
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(app.theme.text_secondary()),
             )),
         ]),
     ];
 
     let list = List::new(options)
-        .block(Block::default().borders(Borders::ALL).title(" Options "));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(" Options ")
+                .title_style(Style::default().fg(app.theme.text_primary())),
+        );
 
     f.render_widget(list, chunks[1]);
 
@@ -78,15 +88,21 @@ pub fn render(f: &mut Frame, _app: &App, area: Rect) {
         Line::from(""),
         Line::from(Span::styled(
             "Press 1 or 2 to select CLI",
-            Style::default().fg(Color::Cyan),
+            Style::default().fg(app.theme.accent_secondary()),
         )),
         Line::from(Span::styled(
             "Press q to quit",
-            Style::default().fg(Color::DarkGray),
+            Style::default().fg(app.theme.text_muted()),
         )),
     ])
     .alignment(Alignment::Center)
-    .block(Block::default().borders(Borders::ALL).title(" Help "));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(app.theme.border()))
+            .title(" Help ")
+            .title_style(Style::default().fg(app.theme.text_primary())),
+    );
 
     f.render_widget(help, chunks[2]);
 }

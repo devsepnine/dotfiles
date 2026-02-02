@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
+    style::Style,
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame,
@@ -15,15 +15,15 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
         .lines()
         .map(|line| {
             let style = if line.starts_with('+') && !line.starts_with("+++") {
-                Style::default().fg(Color::Green)
+                Style::default().fg(app.theme.diff_added())
             } else if line.starts_with('-') && !line.starts_with("---") {
-                Style::default().fg(Color::Red)
+                Style::default().fg(app.theme.diff_removed())
             } else if line.starts_with("@@") {
-                Style::default().fg(Color::Cyan)
+                Style::default().fg(app.theme.accent_secondary())
             } else if line.starts_with("---") || line.starts_with("+++") {
-                Style::default().fg(Color::Yellow)
+                Style::default().fg(app.theme.warning())
             } else {
-                Style::default()
+                Style::default().fg(app.theme.text_primary())
             };
 
             Line::from(Span::styled(line, style))
@@ -41,7 +41,13 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
     };
 
     let paragraph = Paragraph::new(lines)
-        .block(Block::default().borders(Borders::ALL).title(title))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(title)
+                .title_style(Style::default().fg(app.theme.text_primary())),
+        )
         .scroll((app.diff_scroll, 0));
 
     f.render_widget(paragraph, area);

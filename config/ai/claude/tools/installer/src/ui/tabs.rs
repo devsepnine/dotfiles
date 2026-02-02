@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::Line,
     widgets::{Block, Borders, Tabs as RataTabs},
     Frame,
@@ -18,7 +18,7 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
 
     // Dynamic title based on selected CLI
     let title = if let Some(cli) = app.target_cli {
-        format!(" {} Config Installer ", cli.display_name())
+        format!(" {} Config Installer ({}) ", cli.display_name(), app.theme.mode().name())
     } else {
         String::from(" Config Installer ")
     };
@@ -33,13 +33,15 @@ pub fn render(f: &mut Frame, app: &App, area: Rect) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(title),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(title)
+                .title_style(Style::default().fg(app.theme.text_primary())),
         )
         .select(selected_idx)
-        .style(Style::default().fg(Color::White))
+        .style(Style::default().fg(app.theme.text_primary()))
         .highlight_style(
             Style::default()
-                .fg(Color::Cyan)
+                .fg(app.theme.accent_primary())
                 .add_modifier(Modifier::BOLD),
         );
 

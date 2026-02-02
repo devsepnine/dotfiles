@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
@@ -49,11 +49,16 @@ fn render_tree(f: &mut Frame, app: &App, tree: &crate::tree::TreeView, area: Rec
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(title),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(title)
+                .title_style(Style::default().fg(app.theme.text_primary()))
+                .style(Style::default().bg(app.theme.bg_primary())),
         )
+        .style(Style::default().fg(app.theme.text_primary()).bg(app.theme.bg_primary()))
         .highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
+                .bg(app.theme.selection_bg())
+                .fg(app.theme.selection_fg())
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ");
@@ -77,11 +82,11 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
 
             // Check folder selection state
             let (checkbox, checkbox_style) = if tree.is_folder_all_selected(node_idx, &app.components) {
-                ("[x]", Style::default().fg(Color::Green))
+                ("[x]", Style::default().fg(app.theme.success()))
             } else if tree.is_folder_any_selected(node_idx, &app.components) {
-                ("[-]", Style::default().fg(Color::Yellow))
+                ("[-]", Style::default().fg(app.theme.warning()))
             } else {
-                ("[ ]", Style::default().fg(Color::DarkGray))
+                ("[ ]", Style::default().fg(app.theme.text_muted()))
             };
 
             let line = Line::from(vec![
@@ -89,11 +94,11 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
                 Span::styled(" ", checkbox_style),
                 Span::styled(
                     icon,
-                    Style::default().fg(Color::Blue),
+                    Style::default().fg(app.theme.accent_primary()),
                 ),
                 Span::styled(
                     format!("{}/", name),
-                    Style::default().fg(Color::Blue).add_modifier(Modifier::BOLD),
+                    Style::default().fg(app.theme.accent_primary()).add_modifier(Modifier::BOLD),
                 ),
             ]);
 
@@ -104,10 +109,10 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
             let checkbox = if c.selected { "[x]" } else { "[ ]" };
 
             let status_style = match c.status {
-                InstallStatus::New => Style::default().fg(Color::Green),
-                InstallStatus::Modified => Style::default().fg(Color::Yellow),
-                InstallStatus::Unchanged => Style::default().fg(Color::Gray),
-                InstallStatus::Managed => Style::default().fg(Color::Cyan),
+                InstallStatus::New => Style::default().fg(app.theme.success()),
+                InstallStatus::Modified => Style::default().fg(app.theme.warning()),
+                InstallStatus::Unchanged => Style::default().fg(app.theme.text_secondary()),
+                InstallStatus::Managed => Style::default().fg(app.theme.accent_primary()),
             };
 
             // Check if this is the default item
@@ -144,10 +149,10 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
                 Span::raw(format!("{}{} ", indent, checkbox)),
                 Span::styled(
                     format!("{:<20}", filename),
-                    Style::default().fg(Color::White),
+                    Style::default().fg(app.theme.text_primary()),
                 ),
                 Span::styled(format!("({:^9})", c.status.display()), status_style),
-                Span::styled(default_marker, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                Span::styled(default_marker, Style::default().fg(app.theme.peach()).add_modifier(Modifier::BOLD)),
             ];
 
             if app.tab == Tab::Hooks {
@@ -155,13 +160,13 @@ fn render_tree_node(app: &App, tree: &crate::tree::TreeView, node: &TreeNode, no
                     // Add event info
                     spans.push(Span::styled(
                         format!(" [{}]", config.event),
-                        Style::default().fg(Color::Magenta),
+                        Style::default().fg(app.theme.highlight()),
                     ));
                     // Add description if available
                     if let Some(ref desc) = config.description {
                         spans.push(Span::styled(
                             format!(" - {}", desc),
-                            Style::default().fg(Color::DarkGray),
+                            Style::default().fg(app.theme.text_muted()),
                         ));
                     }
                 }
@@ -182,10 +187,10 @@ fn render_flat(f: &mut Frame, app: &App, area: Rect) {
             let checkbox = if c.selected { "[x]" } else { "[ ]" };
 
             let status_style = match c.status {
-                InstallStatus::New => Style::default().fg(Color::Green),
-                InstallStatus::Modified => Style::default().fg(Color::Yellow),
-                InstallStatus::Unchanged => Style::default().fg(Color::Gray),
-                InstallStatus::Managed => Style::default().fg(Color::Cyan),
+                InstallStatus::New => Style::default().fg(app.theme.success()),
+                InstallStatus::Modified => Style::default().fg(app.theme.warning()),
+                InstallStatus::Unchanged => Style::default().fg(app.theme.text_secondary()),
+                InstallStatus::Managed => Style::default().fg(app.theme.accent_primary()),
             };
 
             // Check if this is the default item
@@ -218,10 +223,10 @@ fn render_flat(f: &mut Frame, app: &App, area: Rect) {
                 Span::raw(format!("{} ", checkbox)),
                 Span::styled(
                     format!("{:<40}", c.name),
-                    Style::default().fg(Color::White),
+                    Style::default().fg(app.theme.text_primary()),
                 ),
                 Span::styled(format!("({:^9})", c.status.display()), status_style),
-                Span::styled(default_marker, Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                Span::styled(default_marker, Style::default().fg(app.theme.peach()).add_modifier(Modifier::BOLD)),
             ]);
 
             ListItem::new(line)
@@ -248,11 +253,14 @@ fn render_flat(f: &mut Frame, app: &App, area: Rect) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(title),
+                .border_style(Style::default().fg(app.theme.border()))
+                .title(title)
+                .title_style(Style::default().fg(app.theme.text_primary())),
         )
         .highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
+                .bg(app.theme.selection_bg())
+                .fg(app.theme.selection_fg())
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ");
