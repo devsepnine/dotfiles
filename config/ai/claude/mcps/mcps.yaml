@@ -33,6 +33,11 @@ servers:
     command: "npx -y next-devtools-mcp@latest"
     category: framework
 
+  - name: sveltejs
+    description: "SvelteKit 개발 지원"
+    command: "npx -y @sveltejs/mcp"
+    category: framework
+
   # UI Components
   - name: shadcn-ui
     description: "shadcn/ui 컴포넌트"
