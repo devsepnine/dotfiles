@@ -89,6 +89,12 @@ servers:
     env:
       - GITHUB_PERSONAL_ACCESS_TOKEN
 
+  - name: sentry
+    description: "Sentry 에러 모니터링 및 이슈 분석 (OAuth 로그인)"
+    type: http
+    url: "https://mcp.sentry.dev/mcp"
+    category: productivity
+
   # Database & Backend
   - name: supabase
     description: "Supabase 데이터베이스 작업"
