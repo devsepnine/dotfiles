@@ -2,52 +2,38 @@
 
 set -e
 
-echo "🔨 Building strategic-compact hook for all platforms..."
+echo "Building suggest-compact for all platforms..."
 echo ""
 
-# Build directory
-HOOK_DIR="../../../hooks/suggest-compact"
+# Output directory
+OUTPUT_DIR="../../../hooks/suggest-compact"
+mkdir -p "$OUTPUT_DIR"
 
-# Ensure hooks directory exists
-mkdir -p "$HOOK_DIR"
-
-# macOS (current platform)
-echo "📦 Building for macOS..."
+# macOS
+echo "Building for macOS..."
 cargo build --release
-
-cp target/release/suggest-compact "$HOOK_DIR/suggest-compact_macos"
-
-echo "✅ macOS build complete"
-echo ""
+cp target/release/suggest-compact "$OUTPUT_DIR/suggest-compact_macos"
+echo "macOS build complete"
 
 # Windows
-echo "📦 Building for Windows..."
+echo "Building for Windows..."
 cargo build --release --target x86_64-pc-windows-gnu
+cp target/x86_64-pc-windows-gnu/release/suggest-compact.exe "$OUTPUT_DIR/suggest-compact.exe"
+echo "Windows build complete"
 
-cp target/x86_64-pc-windows-gnu/release/suggest-compact.exe "$HOOK_DIR/suggest-compact.exe"
-
-echo "✅ Windows build complete"
-echo ""
-
-# Linux (using musl for static binary)
+# Linux
 if rustup target list | grep -q "x86_64-unknown-linux-musl (installed)"; then
-    echo "📦 Building for Linux..."
+    echo "Building for Linux..."
     if cargo build --release --target x86_64-unknown-linux-musl 2>/dev/null; then
-        cp target/x86_64-unknown-linux-musl/release/suggest-compact "$HOOK_DIR/suggest-compact_linux"
-
-        echo "✅ Linux build complete"
+        cp target/x86_64-unknown-linux-musl/release/suggest-compact "$OUTPUT_DIR/suggest-compact_linux"
+        echo "Linux build complete"
     else
-        echo "⚠️  Linux build failed (linker issue). Skipping Linux build."
-        echo "   To install musl linker: brew install filosottile/musl-cross/musl-cross"
+        echo "Linux build failed (linker issue). Skipping."
     fi
 else
-    echo "⚠️  Linux target not installed. Skipping Linux build."
-    echo "   To install: rustup target add x86_64-unknown-linux-musl"
-    echo "   To install linker: brew install filosottile/musl-cross/musl-cross"
+    echo "Linux target not installed. Skipping."
 fi
 
 echo ""
-echo "🎉 Build complete!"
-echo ""
-echo "Output files:"
-ls -lh "$HOOK_DIR"/suggest-compact*
+echo "Build complete!"
+ls -lh "$OUTPUT_DIR"/suggest-compact*

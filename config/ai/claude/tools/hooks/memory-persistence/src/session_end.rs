@@ -1,17 +1,11 @@
-use memory_persistence_hooks::{get_sessions_dir, format_date, format_time, log_start, log_end, log_error, log_hook, eprintln_hook};
+use memory_persistence_hooks::{get_sessions_dir, format_date, format_time, log_hook};
 use std::fs;
 use std::io::Read;
 
 fn main() {
-    log_start("SessionEnd");
-
-    if let Err(e) = run() {
-        let error_msg = format!("{}", e);
-        log_error("SessionEnd", &error_msg);
-        std::process::exit(1);
-    }
-
-    log_end("SessionEnd");
+    // Run silently - log to file only, no stderr output
+    // This prevents Windows from blocking on stderr
+    let _ = run();
 }
 
 fn run() -> std::io::Result<()> {
@@ -51,7 +45,6 @@ fn run() -> std::io::Result<()> {
 
         fs::write(&session_file, updated_content)?;
         let _ = log_hook("SessionEnd", &format!("Updated timestamp to {}", current_time));
-        eprintln_hook(&format!("[SessionEnd] Updated session file: {}", session_file.display()));
     } else {
         let _ = log_hook("SessionEnd", "Session file does not exist - creating new");
 
@@ -88,7 +81,6 @@ r#"# Session: {}
 
         fs::write(&session_file, template)?;
         let _ = log_hook("SessionEnd", &format!("Created new session file at {}", current_time));
-        eprintln_hook(&format!("[SessionEnd] Created session file: {}", session_file.display()));
     }
 
     Ok(())

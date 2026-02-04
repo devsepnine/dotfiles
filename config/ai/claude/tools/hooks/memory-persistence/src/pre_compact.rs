@@ -1,18 +1,12 @@
-use memory_persistence_hooks::{get_sessions_dir, format_datetime, format_time, log_start, log_end, log_error, log_hook, eprintln_hook};
+use memory_persistence_hooks::{get_sessions_dir, format_datetime, format_time, log_hook};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::time::SystemTime;
 
 fn main() {
-    log_start("PreCompact");
-
-    if let Err(e) = run() {
-        let error_msg = format!("{}", e);
-        log_error("PreCompact", &error_msg);
-        std::process::exit(1);
-    }
-
-    log_end("PreCompact");
+    // Run silently - log to file only, no stderr output
+    // This prevents Windows from blocking on stderr
+    let _ = run();
 }
 
 fn run() -> std::io::Result<()> {
@@ -71,8 +65,6 @@ fn run() -> std::io::Result<()> {
     } else {
         let _ = log_hook("PreCompact", "No active session found to mark");
     }
-
-    eprintln_hook("[PreCompact] State saved before compaction");
 
     Ok(())
 }

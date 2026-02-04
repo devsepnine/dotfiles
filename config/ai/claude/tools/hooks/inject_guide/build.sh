@@ -2,43 +2,38 @@
 
 set -e
 
-echo "🔨 Building inject_guide for all platforms..."
+echo "Building inject_guide for all platforms..."
 echo ""
 
-# Build directory
-BUILD_DIR="../../../hooks/inject_guide"
+# Output directory
+OUTPUT_DIR="../../../hooks/inject_guide"
+mkdir -p "$OUTPUT_DIR"
 
-# Ensure hooks directory exists
-mkdir -p "$BUILD_DIR"
-
-# macOS (current platform)
-echo "📦 Building for macOS..."
+# macOS
+echo "Building for macOS..."
 cargo build --release
-cp target/release/inject_guide "$BUILD_DIR/inject_guide_macos"
-echo "✅ macOS build complete: $BUILD_DIR/inject_guide_macos"
-echo ""
+cp target/release/inject_guide "$OUTPUT_DIR/inject_guide_macos"
+echo "macOS build complete"
 
 # Windows
-echo "📦 Building for Windows..."
+echo "Building for Windows..."
 cargo build --release --target x86_64-pc-windows-gnu
-cp target/x86_64-pc-windows-gnu/release/inject_guide.exe "$BUILD_DIR/inject_guide.exe"
-echo "✅ Windows build complete: $BUILD_DIR/inject_guide.exe"
-echo ""
+cp target/x86_64-pc-windows-gnu/release/inject_guide.exe "$OUTPUT_DIR/inject_guide.exe"
+echo "Windows build complete"
 
-# Linux (using musl for static binary)
+# Linux
 if rustup target list | grep -q "x86_64-unknown-linux-musl (installed)"; then
-    echo "📦 Building for Linux..."
-    cargo build --release --target x86_64-unknown-linux-musl
-    cp target/x86_64-unknown-linux-musl/release/inject_guide "$BUILD_DIR/inject_guide_linux"
-    echo "✅ Linux build complete: $BUILD_DIR/inject_guide_linux"
+    echo "Building for Linux..."
+    if cargo build --release --target x86_64-unknown-linux-musl 2>/dev/null; then
+        cp target/x86_64-unknown-linux-musl/release/inject_guide "$OUTPUT_DIR/inject_guide_linux"
+        echo "Linux build complete"
+    else
+        echo "Linux build failed (linker issue). Skipping."
+    fi
 else
-    echo "⚠️  Linux target not installed. Skipping Linux build."
-    echo "   To install: rustup target add x86_64-unknown-linux-musl"
-    echo "   To install linker: brew install filosottile/musl-cross/musl-cross"
+    echo "Linux target not installed. Skipping."
 fi
 
 echo ""
-echo "🎉 Build complete!"
-echo ""
-echo "Output files:"
-ls -lh "$BUILD_DIR"/inject_guide*
+echo "Build complete!"
+ls -lh "$OUTPUT_DIR"/inject_guide*

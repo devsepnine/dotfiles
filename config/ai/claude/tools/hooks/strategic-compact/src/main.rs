@@ -91,29 +91,23 @@ fn main() {
     log(&format!("Tool call count: {} (threshold: {})", count, threshold));
 
     if let Err(e) = write_count(&counter_file, count) {
-        let error_msg = format!("Failed to update counter: {}", e);
-        log(&format!("ERROR: {}", error_msg));
-        eprintln!("[StrategicCompact] Warning: {}", error_msg);
+        log(&format!("ERROR: Failed to update counter: {}", e));
         return;
     }
 
-    // Suggest compact at threshold
+    // Suggest compact at threshold (log only, no terminal output)
     if count == threshold {
-        let msg = format!(
-            "{} tool calls reached - consider /compact if transitioning phases",
+        log(&format!(
+            "SUGGESTION: {} tool calls reached - consider /compact if transitioning phases",
             threshold
-        );
-        log(&format!("SUGGESTION: {}", msg));
-        eprintln!("[StrategicCompact] {}", msg);
+        ));
     }
 
-    // Suggest at regular intervals after threshold
+    // Suggest at regular intervals after threshold (log only)
     if count > threshold && count % INTERVAL == 0 {
-        let msg = format!(
-            "{} tool calls - good checkpoint for /compact if context is stale",
+        log(&format!(
+            "SUGGESTION: {} tool calls - good checkpoint for /compact if context is stale",
             count
-        );
-        log(&format!("SUGGESTION: {}", msg));
-        eprintln!("[StrategicCompact] {}", msg);
+        ));
     }
 }

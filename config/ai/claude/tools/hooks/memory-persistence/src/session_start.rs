@@ -1,17 +1,11 @@
-use memory_persistence_hooks::{get_sessions_dir, get_learned_dir, log_start, log_end, log_error, log_hook, eprintln_hook};
+use memory_persistence_hooks::{get_sessions_dir, get_learned_dir, log_hook};
 use std::fs;
 use std::time::{SystemTime, Duration, UNIX_EPOCH};
 
 fn main() {
-    log_start("SessionStart");
-
-    if let Err(e) = run() {
-        let error_msg = format!("{}", e);
-        log_error("SessionStart", &error_msg);
-        std::process::exit(1);
-    }
-
-    log_end("SessionStart");
+    // Run silently - log to file only, no stderr output
+    // This prevents Windows from blocking on stderr
+    let _ = run();
 }
 
 fn run() -> std::io::Result<()> {
@@ -49,12 +43,10 @@ fn run() -> std::io::Result<()> {
 
         let msg = format!("Found {} recent session(s)", recent_sessions.len());
         let _ = log_hook("SessionStart", &msg);
-        eprintln_hook(&format!("[SessionStart] {}", msg));
 
         if let Some((_, latest_path)) = recent_sessions.first() {
             let msg = format!("Latest session: {}", latest_path.display());
             let _ = log_hook("SessionStart", &msg);
-            eprintln_hook(&format!("[SessionStart] {}", msg));
         }
     } else {
         let _ = log_hook("SessionStart", "No recent sessions found");
@@ -81,7 +73,6 @@ fn run() -> std::io::Result<()> {
             learned_dir.display()
         );
         let _ = log_hook("SessionStart", &msg);
-        eprintln_hook(&format!("[SessionStart] {}", msg));
     } else {
         let _ = log_hook("SessionStart", "No learned skills found");
     }
