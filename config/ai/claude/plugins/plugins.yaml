@@ -35,9 +35,3 @@ marketplaces:
     plugins:
       - name: obsidian
         description: Obsidian 노트 관리 (CEO Stephan Ango aka kepano 제작)
-
-  thedotmack:
-    source: https://github.com/thedotmack/claude-mem.git
-    plugins:
-      - name: claude-mem
-        description: "** 현 시점 비추 ** 대화 메모리 (컨텍스트 저장/검색)"
