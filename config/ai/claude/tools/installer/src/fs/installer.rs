@@ -76,6 +76,15 @@ pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Opt
             } else {
                 command.arg("--");
                 if let Some(cmd_str) = &server.def.command {
+                    // On Windows, wrap npx/uvx commands with cmd /c
+                    #[cfg(windows)]
+                    {
+                        let first_part = cmd_str.split_whitespace().next().unwrap_or("");
+                        if first_part == "npx" || first_part == "uvx" {
+                            command.arg("cmd");
+                            command.arg("/c");
+                        }
+                    }
                     for part in cmd_str.split_whitespace() {
                         command.arg(part);
                     }
@@ -106,6 +115,15 @@ pub fn install_mcp_server(server: &McpServer, scope: McpScope, project_path: Opt
             } else {
                 command.arg("--");
                 if let Some(cmd_str) = &server.def.command {
+                    // On Windows, wrap npx/uvx commands with cmd /c
+                    #[cfg(windows)]
+                    {
+                        let first_part = cmd_str.split_whitespace().next().unwrap_or("");
+                        if first_part == "npx" || first_part == "uvx" {
+                            command.arg("cmd");
+                            command.arg("/c");
+                        }
+                    }
                     for part in cmd_str.split_whitespace() {
                         command.arg(part);
                     }

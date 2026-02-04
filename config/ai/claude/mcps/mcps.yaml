@@ -5,11 +5,6 @@ servers:
     command: "npx -y @upstash/context7-mcp"
     category: docs
 
-  - name: ietf-datatracker
-    description: "IETF RFC 문서 검색"
-    command: "npx -y ietf-datatracker-mcp"
-    category: docs
-
   - name: cloudflare-docs
     description: "Cloudflare 문서 검색"
     type: http
