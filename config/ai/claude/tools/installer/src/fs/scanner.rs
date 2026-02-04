@@ -182,14 +182,8 @@ fn scan_hooks(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
 
-        // Select OS-specific binary
-        let binary_name = if cfg!(windows) {
-            format!("{}.exe", config.name)
-        } else if cfg!(target_os = "macos") {
-            format!("{}_macos", config.name)
-        } else {
-            format!("{}_linux", config.name)
-        };
+        // Select OS-specific binary using HookConfig method
+        let binary_name = config.binary_name();
 
         let binary_path = path.join(&binary_name);
         if !binary_path.exists() {

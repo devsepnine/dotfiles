@@ -615,13 +615,19 @@ fn execute_process_step(data: ProcessData, is_removing: bool, _tab: app::Tab, ta
         }
         ProcessData::Component { name, source_path, dest_path, component_type, hook_config, source_dir, dest_dir } => {
             if is_removing {
-                if dest_path.exists() {
-                    match std::fs::remove_file(&dest_path) {
-                        Ok(_) => Ok(format!("[OK] Removed {}", name)),
-                        Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
-                    }
-                } else {
-                    Ok(format!("[SKIP] {} (not installed)", name))
+                // Create a temporary Component for removal
+                let comp = component::Component {
+                    name: name.clone(),
+                    source_path: source_path.clone(),
+                    dest_path: dest_path.clone(),
+                    component_type,
+                    hook_config,
+                    status: component::InstallStatus::Unchanged,
+                    selected: false,
+                };
+                match fs::installer::remove_component(&comp, &dest_dir) {
+                    Ok(_) => Ok(format!("[OK] Removed {}", name)),
+                    Err(e) => Ok(format!("[ERR] {}: {}", name, e)),
                 }
             } else {
                 // Create a temporary Component for install

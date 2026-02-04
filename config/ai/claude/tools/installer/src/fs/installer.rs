@@ -15,8 +15,20 @@ pub fn install_component(component: &Component, _source_dir: &Path, dest_dir: &P
             copy_file(component)?;
             // Register hook in settings.json using hook_config
             if let Some(config) = &component.hook_config {
-                register_hook_in_settings(dest_dir, component, config)?;
+                register_hook_in_settings(dest_dir, config)?;
             }
+        }
+        ComponentType::OutputStyles => {
+            // Copy output style file
+            copy_file(component)?;
+            // Auto-register in settings.json if no style is currently set
+            register_output_style_in_settings(dest_dir, &component.name)?;
+        }
+        ComponentType::Statusline => {
+            // Copy statusline file
+            copy_file(component)?;
+            // Auto-register in settings.json if no statusline is currently set
+            register_statusline_in_settings(dest_dir, &component.name)?;
         }
         ComponentType::ConfigFile if component.name == "settings.json" => {
             // Merge settings.json instead of overwriting
@@ -24,6 +36,32 @@ pub fn install_component(component: &Component, _source_dir: &Path, dest_dir: &P
         }
         _ => {
             copy_file(component)?;
+        }
+    }
+    Ok(())
+}
+
+pub fn remove_component(component: &Component, dest_dir: &Path) -> Result<()> {
+    match &component.component_type {
+        ComponentType::Hooks => {
+            // Unregister hook from settings.json using hook_config
+            if let Some(config) = &component.hook_config {
+                unregister_hook_from_settings(dest_dir, config)?;
+            }
+            // Remove hook binary file
+            if component.dest_path.exists() {
+                std::fs::remove_file(&component.dest_path)?;
+            }
+        }
+        ComponentType::ConfigFile if component.name == "settings.json" => {
+            // Remove installer-managed sections from settings.json instead of deleting the file
+            remove_managed_settings_sections(dest_dir)?;
+        }
+        _ => {
+            // Remove file
+            if component.dest_path.exists() {
+                std::fs::remove_file(&component.dest_path)?;
+            }
         }
     }
     Ok(())
@@ -374,30 +412,11 @@ fn merge_hooks(dest: &mut Value, source: &Value) {
     }
 }
 
-fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &HookConfig) -> Result<()> {
+fn register_hook_in_settings(dest_dir: &Path, config: &HookConfig) -> Result<()> {
     let settings_path = dest_dir.join("settings.json");
 
-    // Determine hook command path
-    let binary_name = component.dest_path.file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| {
-            // Select OS-specific binary name
-            if cfg!(windows) {
-                format!("{}.exe", config.name)
-            } else if cfg!(target_os = "macos") {
-                format!("{}_macos", config.name)
-            } else {
-                format!("{}_linux", config.name)
-            }
-        });
-    // Windows doesn't support ~ expansion, use absolute path
-    let hook_command = if cfg!(windows) {
-        dest_dir.join("hooks").join(&binary_name)
-            .to_string_lossy()
-            .to_string()
-    } else {
-        format!("~/.claude/hooks/{}", binary_name)
-    };
+    // Determine hook command path using HookConfig method
+    let hook_command = config.hook_command_path(dest_dir);
 
     // Read or create settings
     let mut settings: Value = if settings_path.exists() {
@@ -421,7 +440,7 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
 
     let event_hooks = hooks.get_mut(event_name).unwrap();
     if let Value::Array(arr) = event_hooks {
-        // Check if hook already exists
+        // Check if hook already exists by comparing command paths
         let hook_exists = arr.iter().any(|item| {
             item.get("hooks")
                 .and_then(|h| h.as_array())
@@ -429,7 +448,7 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
                     hooks_arr.iter().any(|hook| {
                         hook.get("command")
                             .and_then(|c| c.as_str())
-                            .map(|cmd| cmd.contains(&config.name))
+                            .map(|cmd| cmd == hook_command)
                             .unwrap_or(false)
                     })
                 })
@@ -461,6 +480,153 @@ fn register_hook_in_settings(dest_dir: &Path, component: &Component, config: &Ho
     }
     let output = serde_json::to_string_pretty(&settings)?;
     std::fs::write(&settings_path, output)?;
+
+    Ok(())
+}
+
+pub fn unregister_hook_from_settings(dest_dir: &Path, config: &HookConfig) -> Result<()> {
+    let settings_path = dest_dir.join("settings.json");
+
+    if !settings_path.exists() {
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(&settings_path)?;
+    let mut settings: Value = serde_json::from_str(&content)?;
+
+    // Get hooks object
+    let hooks = match settings.get_mut("hooks") {
+        Some(Value::Object(h)) => h,
+        _ => return Ok(()),
+    };
+
+    // Get event array
+    let event_name = &config.event;
+    let event_hooks = match hooks.get_mut(event_name) {
+        Some(Value::Array(arr)) => arr,
+        _ => return Ok(()),
+    };
+
+    // Remove hook entries that match config.name
+    event_hooks.retain(|item| {
+        !item.get("hooks")
+            .and_then(|h| h.as_array())
+            .map(|hooks_arr| {
+                hooks_arr.iter().any(|hook| {
+                    hook.get("command")
+                        .and_then(|c| c.as_str())
+                        .map(|cmd| cmd.contains(&config.name))
+                        .unwrap_or(false)
+                })
+            })
+            .unwrap_or(false)
+    });
+
+    // Clean up empty structures
+    if event_hooks.is_empty() {
+        hooks.remove(event_name);
+    }
+
+    if hooks.is_empty() {
+        if let Value::Object(ref mut map) = settings {
+            map.remove("hooks");
+        }
+    }
+
+    // Write settings
+    let output = serde_json::to_string_pretty(&settings)?;
+    std::fs::write(&settings_path, output)?;
+
+    Ok(())
+}
+
+/// Removes installer-managed sections from settings.json
+/// This includes: hooks, outputStyle (if it's a known installed style), statusLine (if it's a known installed statusline)
+/// Preserves user settings like env, model, enabledPlugins, etc.
+pub fn remove_managed_settings_sections(dest_dir: &Path) -> Result<()> {
+    let settings_path = dest_dir.join("settings.json");
+
+    if !settings_path.exists() {
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(&settings_path)?;
+    let mut settings: Value = serde_json::from_str(&content)?;
+
+    if let Value::Object(ref mut map) = settings {
+        // 1. Remove all hooks (installer-managed)
+        map.remove("hooks");
+
+        // 2. Remove outputStyle if it exists
+        // TODO: In the future, we could check if the style is actually installed
+        // by cross-referencing with the output-styles directory
+        map.remove("outputStyle");
+
+        // 3. Remove statusLine if it exists
+        // TODO: In the future, we could check if the statusline is actually installed
+        // by cross-referencing with the statusline directory
+        map.remove("statusLine");
+    }
+
+    // Write settings back
+    let output = serde_json::to_string_pretty(&settings)?;
+    std::fs::write(&settings_path, output)?;
+
+    Ok(())
+}
+
+/// Auto-register an output style in settings.json if no style is currently set
+fn register_output_style_in_settings(dest_dir: &Path, style_name: &str) -> Result<()> {
+    let settings_path = dest_dir.join("settings.json");
+
+    // Read or create settings
+    let mut settings: Value = if settings_path.exists() {
+        let content = std::fs::read_to_string(&settings_path)?;
+        serde_json::from_str(&content)?
+    } else {
+        serde_json::json!({})
+    };
+
+    // Only set if outputStyle is not already configured
+    if settings.get("outputStyle").is_none() {
+        // Remove .md extension if present
+        let style_name = style_name.strip_suffix(".md").unwrap_or(style_name);
+        settings["outputStyle"] = serde_json::json!(style_name);
+
+        // Write settings
+        if let Some(parent) = settings_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let output = serde_json::to_string_pretty(&settings)?;
+        std::fs::write(&settings_path, output)?;
+    }
+
+    Ok(())
+}
+
+/// Auto-register a statusline in settings.json if no statusline is currently set
+fn register_statusline_in_settings(dest_dir: &Path, statusline_name: &str) -> Result<()> {
+    let settings_path = dest_dir.join("settings.json");
+
+    // Read or create settings
+    let mut settings: Value = if settings_path.exists() {
+        let content = std::fs::read_to_string(&settings_path)?;
+        serde_json::from_str(&content)?
+    } else {
+        serde_json::json!({})
+    };
+
+    // Only set if statusLine is not already configured
+    if settings.get("statusLine").is_none() {
+        settings["statusLine"] = serde_json::json!(statusline_name);
+
+        // Write settings
+        if let Some(parent) = settings_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let output = serde_json::to_string_pretty(&settings)?;
+        std::fs::write(&settings_path, output)?;
+    }
 
     Ok(())
 }

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -59,6 +59,34 @@ pub struct HookConfig {
     pub timeout: Option<u32>,
     #[serde(default)]
     pub description: Option<String>,
+}
+
+impl HookConfig {
+    /// Returns the platform-specific binary name for this hook
+    pub fn binary_name(&self) -> String {
+        if cfg!(windows) {
+            format!("{}.exe", self.name)
+        } else if cfg!(target_os = "macos") {
+            format!("{}_macos", self.name)
+        } else {
+            format!("{}_linux", self.name)
+        }
+    }
+
+    /// Returns the full command path for this hook in settings.json
+    pub fn hook_command_path(&self, dest_dir: &Path) -> String {
+        let binary_name = self.binary_name();
+
+        if cfg!(windows) {
+            dest_dir
+                .join("hooks")
+                .join(&binary_name)
+                .to_string_lossy()
+                .to_string()
+        } else {
+            format!("~/.claude/hooks/{}", binary_name)
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
