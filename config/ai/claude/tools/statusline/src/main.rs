@@ -1,3 +1,4 @@
+use chrono::Local;
 use serde::Deserialize;
 use std::env;
 use std::fs;
@@ -102,22 +103,8 @@ fn count_todos(transcript_path: &str) -> usize {
 }
 
 fn get_current_time() -> String {
-    // Get current time in HH:MM format
-    // Using chrono would be cleaner, but we can use system command
-    Command::new("date")
-        .arg("+%H:%M")
-        .output()
-        .ok()
-        .and_then(|output| {
-            if output.status.success() {
-                String::from_utf8(output.stdout)
-                    .ok()
-                    .map(|s| s.trim().to_string())
-            } else {
-                None
-            }
-        })
-        .unwrap_or_else(|| "??:??".to_string())
+    // Get current time in HH:MM format using chrono for cross-platform compatibility
+    Local::now().format("%H:%M").to_string()
 }
 
 fn main() {
