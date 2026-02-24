@@ -73,7 +73,7 @@ impl Tab {
     pub fn for_cli(cli: TargetCli) -> Vec<Tab> {
         match cli {
             TargetCli::Claude => Self::all().to_vec(),
-            TargetCli::Codex => vec![Tab::Skills, Tab::McpServers],
+            TargetCli::Codex => vec![Tab::Skills, Tab::Config, Tab::McpServers],
         }
     }
 

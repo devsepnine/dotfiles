@@ -146,7 +146,7 @@ where
                 // Check for input (non-blocking with short timeout)
                 if poll(Duration::from_millis(100))? {
                     if let Event::Key(key) = event::read()? {
-                        if key.kind == KeyEventKind::Press {
+                        if key.kind != KeyEventKind::Release {
                             handle_installing_input(app, key.code)?;
                         }
                     }
@@ -259,7 +259,7 @@ where
             }
             app::View::CliSelection => {
                 if let Event::Key(key) = event::read()? {
-                    if key.kind == KeyEventKind::Press {
+                    if key.kind != KeyEventKind::Release {
                         handle_cli_selection(app, key.code, &refresh_tx)?;
                     }
                 }
@@ -268,7 +268,7 @@ where
                 // Check for input (non-blocking with short timeout)
                 if poll(Duration::from_millis(100))? {
                     if let Event::Key(key) = event::read()? {
-                        if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                        if key.kind != KeyEventKind::Release && key.code == KeyCode::Char('q') {
                             app.should_quit = true;
                         }
                     }
@@ -301,21 +301,21 @@ where
             }
             app::View::EnvInput => {
                 if let Event::Key(key) = event::read()? {
-                    if key.kind == KeyEventKind::Press {
+                    if key.kind != KeyEventKind::Release {
                         handle_env_input(app, key.code)?;
                     }
                 }
             }
             app::View::ProjectPath => {
                 if let Event::Key(key) = event::read()? {
-                    if key.kind == KeyEventKind::Press {
+                    if key.kind != KeyEventKind::Release {
                         handle_project_path_input(app, key.code);
                     }
                 }
             }
             _ => {
                 if let Event::Key(key) = event::read()? {
-                    if key.kind == KeyEventKind::Press {
+                    if key.kind != KeyEventKind::Release {
                         match app.current_view {
                             app::View::List => handle_list_input(app, key.code, key.modifiers)?,
                             app::View::Diff => handle_diff_input(app, key.code)?,

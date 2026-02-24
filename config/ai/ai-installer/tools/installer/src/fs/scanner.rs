@@ -58,7 +58,7 @@ pub fn scan_components(source_dir: &Path, dest_dir: &Path, target_cli: TargetCli
 
             scan_statusline(source_dir, dest_dir, &mut components)?;
             scan_hooks(source_dir, dest_dir, &mut components)?;
-            add_config_files(source_dir, dest_dir, &mut components)?;
+            add_config_files(source_dir, dest_dir, target_cli, &mut components)?;
         }
         TargetCli::Codex => {
             // Only scan skills for Codex CLI
@@ -68,6 +68,8 @@ pub fn scan_components(source_dir: &Path, dest_dir: &Path, target_cli: TargetCli
                 ComponentType::Skills,
                 &mut components,
             )?;
+
+            add_config_files(source_dir, dest_dir, target_cli, &mut components)?;
         }
     }
 
@@ -210,9 +212,14 @@ fn scan_hooks(source_dir: &Path, dest_dir: &Path, components: &mut Vec<Component
 fn add_config_files(
     source_dir: &Path,
     dest_dir: &Path,
+    target_cli: TargetCli,
     components: &mut Vec<Component>,
 ) -> Result<()> {
-    let config_files = ["settings.json"];
+    // CLI-specific config files
+    let config_files = match target_cli {
+        TargetCli::Claude => vec!["settings.json", "CLAUDE.md"],
+        TargetCli::Codex => vec!["AGENTS.md"],
+    };
 
     for file in config_files {
         let source_path = source_dir.join(file);
