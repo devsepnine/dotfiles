@@ -6,7 +6,7 @@ use crate::app::TargetCli;
 use crate::component::{Component, ComponentType, HookConfig, InstallStatus};
 use crate::mcp::{McpCatalog, McpServer, McpStatus};
 use crate::plugin::{parse_plugins_yaml, Plugin, PluginDef, PluginStatus};
-use super::create_claude_command;
+use super::{create_claude_command, create_cli_command};
 
 pub fn scan_components(source_dir: &Path, dest_dir: &Path, target_cli: TargetCli) -> Result<Vec<Component>> {
     let mut components = Vec::new();
@@ -337,9 +337,7 @@ fn get_installed_claude_mcp_servers() -> Vec<String> {
 }
 
 fn get_installed_codex_mcp_servers() -> Vec<String> {
-    use std::process::Command;
-
-    let mut cmd = Command::new("codex");
+    let mut cmd = create_cli_command(TargetCli::Codex);
     cmd.args(["mcp", "list"]);
     let output = cmd.output();
 
