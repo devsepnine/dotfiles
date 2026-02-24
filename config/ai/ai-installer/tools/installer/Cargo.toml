@@ -1,7 +1,11 @@
 [package]
-name = "installer"
+name = "hibi_ai"
 version = "0.1.0"
 edition = "2024"
+
+[[bin]]
+name = "hibi"
+path = "src/main.rs"
 
 [dependencies]
 # TUI

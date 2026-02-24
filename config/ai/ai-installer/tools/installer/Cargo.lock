@@ -442,6 +442,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hibi_ai"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crossterm",
+ "dirs",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "similar",
+ "terminal-light",
+ "walkdir",
+]
+
+[[package]]
 name = "ident_case"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -477,22 +493,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.114",
-]
-
-[[package]]
-name = "installer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "crossterm",
- "dirs",
- "ratatui",
- "serde",
- "serde_json",
- "serde_yaml",
- "similar",
- "terminal-light",
- "walkdir",
 ]
 
 [[package]]
