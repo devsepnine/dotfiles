@@ -131,9 +131,3 @@ servers:
     type: http
     url: "https://observability.mcp.cloudflare.com/mcp"
     category: deployment
-
-  # System & Tools
-  - name: filesystem
-    description: "파일시스템 작업"
-    command: "npx -y @modelcontextprotocol/server-filesystem /path/to/your/projects"
-    category: system
