@@ -348,18 +348,27 @@ fn get_installed_codex_mcp_servers() -> Vec<String> {
             let stdout = String::from_utf8_lossy(&out.stdout);
             stdout
                 .lines()
-                .skip(1) // Skip header line ("Name  Command  Args...")
                 .filter_map(|line| {
                     let trimmed = line.trim();
+
+                    // Skip empty lines
                     if trimmed.is_empty() {
                         return None;
                     }
-                    // Parse Codex MCP list output format (table format)
-                    // Extract first column (server name) from whitespace-separated table
-                    let name = trimmed.split_whitespace().next()?.trim();
-                    if name.is_empty() {
+
+                    // Skip header lines (contain "Name" or "Command" or "Url" columns)
+                    if trimmed.starts_with("Name") && (trimmed.contains("Command") || trimmed.contains("Url")) {
                         return None;
                     }
+
+                    // Extract first column (server name) from whitespace-separated table
+                    let name = trimmed.split_whitespace().next()?.trim();
+
+                    // Skip if name is empty or looks like a header
+                    if name.is_empty() || name == "Name" {
+                        return None;
+                    }
+
                     Some(name.to_string())
                 })
                 .collect()
